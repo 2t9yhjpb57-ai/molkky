@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="theme-color" content="#111A2B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
@@ -469,6 +470,7 @@ function MQ(url,onMsg,onState){
 }
 const MQ_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
 const MQ_TOPIC=code=>'molkky-scoreboard/v1/'+code;
+const APP_VER=5; // 更新のたびに上げる。配信用表示はこれより新しい版のデータを受け取ると自動で読み込み直す
 </script>
 <script>
 (function(){
@@ -840,7 +842,15 @@ function runOverlay(code){
     }else if(lastK===null||!k)g('oFlash').classList.remove('show');
     lastK=k||'';
   }
-  const onMsg=(t,p)=>{try{const d=JSON.parse(p);if(!d||d.v!==1)return;if(cur&&d.at<cur.at)return;cur=d;draw(d);}catch(e){}};
+  const reloadIfNewer=d=>{
+    if(!(d.app>APP_VER))return false;
+    let tried='';try{tried=sessionStorage.getItem('molkky-ovreload')||'';}catch(e){}
+    if(tried===String(d.app))return false;            // 同じ版で読み込み直しを繰り返さない
+    try{sessionStorage.setItem('molkky-ovreload',String(d.app));}catch(e){}
+    const u=new URL(location.href);u.searchParams.set('v',d.app);u.searchParams.set('r',Date.now());
+    location.replace(u.toString());return true;
+  };
+  const onMsg=(t,p)=>{try{const d=JSON.parse(p);if(!d||d.v!==1)return;if(reloadIfNewer(d))return;if(cur&&d.at<cur.at)return;cur=d;draw(d);}catch(e){}};
   if(!code){g('oWait').textContent='URLにルームコードがありません';return;}
   MQ_BROKERS.forEach(u=>MQ(u,onMsg,()=>{}).sub(MQ_TOPIC(code)));
 }
@@ -851,7 +861,7 @@ const newRoom=()=>Array.from({length:6},()=>ROOM_CH[Math.floor(Math.random()*ROO
 let cast=null,castT=null;
 function castState(){
   const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],th=S.sets[i].throws;
-  return {v:1,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,out:E.out,threeMiss:S.cfg.threeMiss,
+  return {v:1,app:APP_VER,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,out:E.out,threeMiss:S.cfg.threeMiss,
     turn:E.winner===null?E.turn:null,wins:M.wins,setWinner:E.winner,reason:E.reason,over:M.over,champ:M.champ,totals:M.totals,
     last:E.last?{p:E.last.p,t:E.last.t,burst:E.last.burst,out:E.last.out,k:i+':'+th.length}:null};
 }
@@ -867,7 +877,7 @@ function castSend(now){
   if(!cast)return;clearTimeout(castT);
   castT=setTimeout(()=>{if(!cast)return;const p=JSON.stringify(castState());cast.clients.forEach(c=>c.pub(MQ_TOPIC(ui.room),p,true));},now?0:120);
 }
-function overlayUrl(){return location.origin+location.pathname+'?overlay='+ui.room;}
+function overlayUrl(){return location.origin+location.pathname+'?overlay='+ui.room+'&v='+APP_VER;}
 function renderCast(){
   $('openCast').classList.toggle('live',!!cast);
   if($('castOv').hidden)return;
