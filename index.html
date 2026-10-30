@@ -181,6 +181,7 @@ html.ov{padding:0!important}
 .sbr .ms i.on{background:var(--red)}
 .sbr .sw{min-width:6.4vw;height:6.4vw;padding:0 1.2vw;border-radius:1vw;background:rgba(255,255,255,.12);display:grid;place-items:center;font-weight:800;font-size:4.4vw}
 .sbr .pt{text-align:right;font-weight:800;font-stretch:80%;font-size:10vw;line-height:1;font-variant-numeric:tabular-nums}
+.sb.final .sbr .pt{font-size:8vw}
 .sbr .pt small{display:block;font-family:var(--f-body);font-size:2.6vw;font-weight:500;opacity:.7;margin-top:.4vw}
 .sbf{display:flex;align-items:center;justify-content:center;gap:2vw;height:0;overflow:hidden;font-family:var(--f-body);font-weight:900;font-size:4.4vw;transition:height .25s;background:var(--yellow);color:var(--ink)}
 .sbf.show{height:8vw}
@@ -765,7 +766,7 @@ function runOverlay(code){
   function flash(txt,cls,ms){const f=g('oFlash');f.className='sbf show '+(cls||'');f.textContent=txt;clearTimeout(flashT);if(ms)flashT=setTimeout(()=>f.classList.remove('show'),ms);}
   function draw(d){
     g('oWait').hidden=true;g('oSb').hidden=false;
-    g('oSet').textContent=d.over?'FINAL':'SET '+d.set;
+    g('oSet').textContent=d.over?'FINAL':'SET '+d.set;g('oSb').classList.toggle('final',!!d.over);
     g('oFmt').textContent=d.fmt;
     [0,1].forEach(p=>{
       const r=g('oR'+p);
@@ -773,10 +774,9 @@ function runOverlay(code){
       r.querySelector('.nmt').textContent=d.names[p];
       r.querySelector('.ms').innerHTML=(!d.over&&d.threeMiss&&d.m[p])?[0,1,2].map(k=>`<i class="${k<d.m[p]?'on':''}"></i>`).join(''):'';
       r.querySelector('.sw').textContent=d.wins[p];
-      r.querySelector('.pt').innerHTML=d.over?`${d.wins[p]}<small>合計 ${d.totals[p]}点</small>`:String(d.s[p]);
-      r.querySelector('.sw').hidden=!!d.over;
+      r.querySelector('.pt').innerHTML=d.over?`${d.totals[p]}<small>合計得点</small>`:String(d.s[p]);
     });
-    if(d.over){flash(d.champ===null?'引き分け':esc2(d.names[d.champ])+' の勝利','win',0);g('oFlash').innerHTML=d.champ===null?'引き分け':esc2(d.names[d.champ])+'　WIN';lastK=d.last&&d.last.k;return;}
+    if(d.over){flash(`${d.wins[0]} − ${d.wins[1]}　${d.champ===null?'引き分け':d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
     if(d.setWinner!==null&&d.setWinner!==undefined){flash(`${d.names[d.setWinner]} が SET ${d.set} 獲得`,'win',0);lastK=d.last&&d.last.k;return;}
     const k=d.last&&d.last.k;
     if(k&&k!==lastK&&lastK!==null){
