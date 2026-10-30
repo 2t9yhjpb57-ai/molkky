@@ -64,7 +64,7 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid va
 .team[data-p="0"]{--pc:var(--green)} .team[data-p="1"]{--pc:var(--blue)} .team[data-p="2"]{--pc:var(--orange)}
 .teams.n3{grid-template-columns:repeat(3,1fr);gap:6px}
 .teams.n3 .th{padding:0 8px;gap:4px}
-.teams.n3 .th .side{flex:0 0 auto}
+.team .th .side{flex:0 0 auto}
 .teams.n3 .th .side.r{font-size:10px}
 .teams.n3 .tb{padding:6px 8px 8px}
 .teams.n3 .score{font-size:clamp(40px,12vw,68px)}
@@ -73,6 +73,11 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid va
 .teams.n3 .misses i{width:10px;height:10px}
 .teams.n3 .log{font-size:11px}
 .team.out{opacity:.45}
+.past{display:flex;justify-content:space-between;gap:6px;font-size:11px;font-weight:700;color:var(--muted);border-top:1px solid var(--hair);padding-top:4px}
+.past b{font-family:var(--f-num);font-weight:800;font-size:14px;color:var(--ink);margin-left:3px}
+.team.active .past{color:rgba(255,255,255,.85);border-top-color:rgba(255,255,255,.22)}
+.team.active .past b{color:var(--on-color)}
+.teams.n3 .past{flex-direction:column;gap:0}
 .outtag{font-size:11px;font-weight:900;color:var(--red);letter-spacing:.06em}
 .team{transition:background .25s}
 .team .th{border-bottom-color:var(--hair)}
@@ -188,7 +193,7 @@ html.ov{padding:0!important}
 .sbh .fm{opacity:.7;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sbh .lv{display:flex;align-items:center;gap:1vw;font-family:var(--f-num);font-weight:800;font-size:2.8vw;letter-spacing:.14em}
 .sbh .lv i{width:1.6vw;height:1.6vw;border-radius:50%;background:var(--red)}
-.sbr{position:relative;display:grid;grid-template-columns:1.6vw 1fr auto 15vw;align-items:center;gap:2.4vw;height:13vw;padding-right:2.6vw;border-top:1px solid rgba(255,255,255,.08)}
+.sbr{position:relative;display:grid;grid-template-columns:1.6vw 1fr auto auto 15vw;align-items:center;gap:2.4vw;height:13vw;padding-right:2.6vw;border-top:1px solid rgba(255,255,255,.08)}
 .sbr .clr{height:100%;background:var(--pc)}
 .sbr[data-p="0"]{--pc:#19C26B} .sbr[data-p="1"]{--pc:#3D8BFF} .sbr[data-p="2"]{--pc:#FF8A2A}
 .sbr.out{opacity:.45}
@@ -205,6 +210,9 @@ html.ov{padding:0!important}
 .sbr .sw{min-width:6.4vw;height:6.4vw;padding:0 1.2vw;border-radius:1vw;background:rgba(255,255,255,.12);display:grid;place-items:center;font-weight:800;font-size:4.4vw}
 .sbr .pt{text-align:right;font-weight:800;font-stretch:80%;font-size:10vw;line-height:1;font-variant-numeric:tabular-nums}
 .sb.final .sbr .pt{font-size:8vw}
+.sbr .hx{display:flex;flex-direction:column;align-items:flex-end;font-family:var(--f-body);font-size:2.4vw;font-weight:500;line-height:1.25;color:rgba(255,255,255,.7)}
+.sbr .hx b{font-family:var(--f-num);font-weight:800;font-size:3.2vw;color:#fff}
+.sbr .hx:empty{display:none}
 .sbr .pt small{display:block;font-family:var(--f-body);font-size:2.6vw;font-weight:500;opacity:.7;margin-top:.4vw}
 .sbf{display:flex;align-items:center;justify-content:center;gap:2vw;height:0;overflow:hidden;font-family:var(--f-body);font-weight:900;font-size:4.4vw;transition:height .25s;background:var(--yellow);color:var(--ink)}
 .sbf.show{height:8vw}
@@ -471,7 +479,7 @@ function MQ(url,onMsg,onState){
 }
 const MQ_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
 const MQ_TOPIC=code=>'molkky-scoreboard/v1/'+code;
-const APP_VER=6; // 更新のたびに上げる。配信用表示はこれより新しい版のデータを受け取ると自動で読み込み直す
+const APP_VER=7; // 更新のたびに上げる。配信用表示はこれより新しい版のデータを受け取ると自動で読み込み直す
 </script>
 <script>
 (function(){
@@ -526,6 +534,8 @@ function matchInfo(){
 }
 const whyText=(E,n)=>E.reason==='fifty'?'ちょうど50点に到達':(NP()===2?`${esc(n[1-E.winner])}が3回連続ミス`:'ほかの全員が3回連続ミスで脱落');
 const winsText=M=>M.wins.join(' − ');
+// 前セットの得点と、終わったセットまでの合計得点（進行中のセットは含めない）
+const pastInfo=(M,i)=>({prev:i>0?M.ev[i-1].s:null,sum:PL().map(p=>M.ev.slice(0,i).reduce((a,e)=>a+e.s[p],0))});
 
 /* ---------- match clock ---------- */
 const hasClock=()=>S.cfg.timeLimit>0;
@@ -588,7 +598,7 @@ function render(){
   $('setno').textContent=`SET ${i+1}`;
   $('fmt').textContent=fmtLabel(f)+(S.cfg.threeMiss?'・3連続ミス負け':'');
   $('setwins').innerHTML=PL().map(p=>`<span class="chip c${p}">${M.wins[p]}</span>`).join('');
-  const N=NP();$('teams').classList.toggle('n3',N===3);$('team2').hidden=N<3;
+  const N=NP(),PI=pastInfo(M,i);$('teams').classList.toggle('n3',N===3);$('team2').hidden=N<3;
   PL().forEach(p=>{
     const el=$('team'+p),sc=E.s[p],ord=(p-firstOf(i)+N)%N;
     el.classList.toggle('active',E.winner===null&&E.turn===p);
@@ -599,6 +609,7 @@ function render(){
         <div class="scoreRow"><span class="score">${sc}</span><span class="unit">/ 50 pt</span></div>
         ${spark(E.hist[p])}
         <div class="foot"><span class="remain">あと<b>${50-sc}</b></span>${E.out[p]?'<span class="outtag">脱落</span>':S.cfg.threeMiss?`<span class="misses" aria-label="連続ミス${E.m[p]}回">${[0,1,2].map(k=>`<i class="${k<E.m[p]?'on':''}"></i>`).join('')}</span>`:''}</div>
+        ${PI.prev?`<div class="past"><span>前セット<b>${PI.prev[p]}</b></span><span>合計<b>${PI.sum[p]}</b></span></div>`:''}
         <div class="log"><span>${E.log[p].slice(-10).join('  ')||'—'}</span></div>
       </div>`;
   });
@@ -823,7 +834,7 @@ function runOverlay(code){
     g('oSet').textContent=d.over?'FINAL':'SET '+d.set;g('oSb').classList.toggle('final',!!d.over);
     g('oFmt').textContent=d.fmt;
     const N=d.names.length,rows=g('oRows');
-    if(rows.children.length!==N)rows.innerHTML=d.names.map((_,p)=>`<div class="sbr" data-p="${p}" id="oR${p}"><i class="clr"></i><span class="nm"><span class="tri"></span><span class="nmt"></span><span class="ms"></span></span><span class="sw"></span><span class="pt"></span></div>`).join('');
+    if(rows.children.length!==N)rows.innerHTML=d.names.map((_,p)=>`<div class="sbr" data-p="${p}" id="oR${p}"><i class="clr"></i><span class="nm"><span class="tri"></span><span class="nmt"></span><span class="ms"></span></span><span class="hx"></span><span class="sw"></span><span class="pt"></span></div>`).join('');
     g('oSb').classList.toggle('n3',N===3);
     d.names.forEach((_,p)=>{
       const r=g('oR'+p),isOut=!d.over&&d.out&&d.out[p];
@@ -831,6 +842,7 @@ function runOverlay(code){
       r.querySelector('.nmt').textContent=d.names[p];
       r.querySelector('.ms').innerHTML=isOut?'<span style="font-size:.6em;color:#FF6B6B">脱落</span>':(!d.over&&d.threeMiss&&d.m[p])?[0,1,2].map(k=>`<i class="${k<d.m[p]?'on':''}"></i>`).join(''):'';
       r.querySelector('.sw').textContent=d.wins[p];
+      r.querySelector('.hx').innerHTML=(!d.over&&d.prev)?`<span>前 <b>${d.prev[p]}</b></span><span>計 <b>${d.sum[p]}</b></span>`:'';
       r.querySelector('.pt').innerHTML=d.over?`${d.totals[p]}<small>合計得点</small>`:String(d.s[p]);
     });
     if(d.over){flash(`${d.wins.join(' − ')}${d.champ===null?'':'　'+d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
@@ -863,7 +875,7 @@ const newRoom=()=>Array.from({length:6},()=>ROOM_CH[Math.floor(Math.random()*ROO
 let cast=null,castT=null;
 function castState(){
   const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],th=S.sets[i].throws;
-  return {v:1,app:APP_VER,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,out:E.out,threeMiss:S.cfg.threeMiss,
+  return {v:1,app:APP_VER,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,out:E.out,...pastInfo(M,i),threeMiss:S.cfg.threeMiss,
     turn:E.winner===null?E.turn:null,wins:M.wins,setWinner:E.winner,reason:E.reason,over:M.over,champ:M.champ,totals:M.totals,
     last:E.last?{p:E.last.p,t:E.last.t,burst:E.last.burst,out:E.last.out,k:i+':'+th.length}:null};
 }
