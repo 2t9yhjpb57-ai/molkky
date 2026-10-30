@@ -589,7 +589,7 @@ function renderResult(M,E,i){
   const score=`<div class="result"><span class="a">${M.wins[0]}</span><span class="d">–</span><span class="b">${M.wins[1]}</span></div><div class="rnames"><span>${esc(n[0])}</span><span>${esc(n[1])}</span></div>`;
   let head,btns;
   if(M.over){
-    head=`<h2>${M.champ===null?'引き分け':esc(n[M.champ])+'の勝利'}</h2><p class="sub">試合終了　最終セット：${esc(n[w])}（${why}）</p>`;
+    head=`<h2>${M.champ===null?`試合終了　${M.wins[0]} − ${M.wins[1]}`:esc(n[M.champ])+'の勝利'}</h2><p class="sub">試合終了　最終セット：${esc(n[w])}（${why}）</p>`;
     btns=`<button class="btn primary" type="button" data-act="rematch">同じ設定でもう一試合</button><button class="btn" type="button" data-act="settings">設定を変えて新しい試合</button><button class="btn" type="button" data-act="undo">直前の入力を取り消す</button>`;
     sh.innerHTML=head+finalTable(M)+`<div class="btns">${btns}</div>`;
     ov.hidden=false;return;
@@ -684,7 +684,7 @@ function syncSettings(){
   document.querySelectorAll('#timePresets button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.t===t));
   $('tOut').textContent=t||'—';
   $('fmtNote').textContent=f.mode==='race'?`先に${f.n}セット取った方の勝ち（最大${f.n*2-1}セット）。`:
-    (f.n===1?'1セットで決着。':`${f.n}セットすべて行い、取ったセット数で勝敗を決めます。${f.n%2===0?'同数なら引き分けです。':''}`);
+    (f.n===1?'1セットで決着。':`${f.n}セットすべて行い、取ったセット数で勝敗を決めます。${f.n%2===0?'同数の場合は、セット数と合計得点を表示して終わります。':''}`);
   const ms=[10,5,2].filter(m=>m<t);
   $('timeNote').textContent=t?`最初の得点入力で計測が始まり、時計をタップすると一時停止できます。${ms.map(m=>'残り'+m+'分').join('・')}${ms.length?'・':''}終了時に画面上部へ通知します。通知が出ても試合は止まりません。`:'時間制限なしで最後まで行います。';
 }
@@ -776,7 +776,7 @@ function runOverlay(code){
       r.querySelector('.sw').textContent=d.wins[p];
       r.querySelector('.pt').innerHTML=d.over?`${d.totals[p]}<small>合計得点</small>`:String(d.s[p]);
     });
-    if(d.over){flash(`${d.wins[0]} − ${d.wins[1]}　${d.champ===null?'引き分け':d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
+    if(d.over){flash(`${d.wins[0]} − ${d.wins[1]}${d.champ===null?'':'　'+d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
     if(d.setWinner!==null&&d.setWinner!==undefined){flash(`${d.names[d.setWinner]} が SET ${d.set} 獲得`,'win',0);lastK=d.last&&d.last.k;return;}
     const k=d.last&&d.last.k;
     if(k&&k!==lastK&&lastK!==null){
