@@ -15,7 +15,7 @@
 :root{
   color-scheme:light;
   --bg:#EEF1F5; --tile:#FFFFFF; --tile-2:#EDF0F4; --hair:#E0E4EA; --ink:#0E1522; --muted:#4E586A; --faint:#98A1B0;
-  --green:#0F9D58; --blue:#1A6FE0; --red:#E2363B; --yellow:#FFC531; --on-color:#FFFFFF; --pin-ink:#FFFFFF; --pin:#111A2B;
+  --green:#0F9D58; --blue:#1A6FE0; --orange:#E2731B; --red:#E2363B; --yellow:#FFC531; --on-color:#FFFFFF; --pin-ink:#FFFFFF; --pin:#111A2B;
   --scrim:rgba(14,21,34,.45);
   --f-num:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-body:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
@@ -56,10 +56,23 @@ button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid va
 .setwins{display:flex;align-items:center;gap:6px;font-family:var(--f-num);font-weight:500;font-size:15px}
 .chip{min-width:28px;height:26px;padding:0 7px;border-radius:6px;display:inline-grid;place-items:center;color:var(--on-color);font-family:var(--f-num);font-weight:800;font-size:15px}
 .chip.g{background:var(--green)} .chip.b{background:var(--blue)} .chip.r{background:var(--red)} .chip.y{background:var(--yellow);color:var(--pin-ink)}
+.chip.c0{background:var(--green)} .chip.c1{background:var(--blue)} .chip.c2{background:var(--orange)}
 .chip.ghost{background:var(--tile-2);color:var(--muted)}
 
 /* team tiles */
-.team[data-p="0"]{--pc:var(--green)} .team[data-p="1"]{--pc:var(--blue)}
+.team[data-p="0"]{--pc:var(--green)} .team[data-p="1"]{--pc:var(--blue)} .team[data-p="2"]{--pc:var(--orange)}
+.teams.n3{grid-template-columns:repeat(3,1fr);gap:6px}
+.teams.n3 .th{padding:0 8px;gap:4px}
+.teams.n3 .th .side{flex:0 0 auto}
+.teams.n3 .th .side.r{font-size:10px}
+.teams.n3 .tb{padding:6px 8px 8px}
+.teams.n3 .score{font-size:clamp(40px,12vw,68px)}
+.teams.n3 .unit{display:none}
+.teams.n3 .remain b{font-size:14px}
+.teams.n3 .misses i{width:10px;height:10px}
+.teams.n3 .log{font-size:11px}
+.team.out{opacity:.45}
+.outtag{font-size:11px;font-weight:900;color:var(--red);letter-spacing:.06em}
 .team{transition:background .25s}
 .team .th{border-bottom-color:var(--hair)}
 .team .dot{width:8px;height:8px;border-radius:50%;background:var(--pc)}
@@ -148,7 +161,12 @@ tr.cur td{color:var(--muted)}
 .tbtn.live .ldot{display:inline-block;animation:blink 1.4s ease-in-out infinite}
 .setinfo{overflow:hidden}
 .setinfo .f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-@media (max-width:420px){.setinfo .f{display:none}.t-top .tbtn{padding:0 10px}}
+@media (max-width:420px){.setinfo .f{display:none}.t-top .tbtn{padding:0 8px;font-size:12px}.t-top .tb{gap:6px}.setwins{gap:4px}.setwins .chip{min-width:22px;padding:0 4px}.gear{width:32px}}
+.setinfo .s{white-space:nowrap}
+.timer .th .side{flex:0 0 auto}
+.timer .big{white-space:nowrap}
+.timer .cap{white-space:nowrap}
+.mclock.hide .big{letter-spacing:.12em}
 .caststat{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
 .caststat i{width:9px;height:9px;border-radius:50%;background:var(--faint)}
 .caststat.ok i{background:var(--green)} .caststat.ng i{background:var(--red)} .caststat.wait i{background:#C98A00}
@@ -171,7 +189,11 @@ html.ov{padding:0!important}
 .sbh .lv i{width:1.6vw;height:1.6vw;border-radius:50%;background:var(--red)}
 .sbr{position:relative;display:grid;grid-template-columns:1.6vw 1fr auto 15vw;align-items:center;gap:2.4vw;height:13vw;padding-right:2.6vw;border-top:1px solid rgba(255,255,255,.08)}
 .sbr .clr{height:100%;background:var(--pc)}
-.sbr[data-p="0"]{--pc:#19C26B} .sbr[data-p="1"]{--pc:#3D8BFF}
+.sbr[data-p="0"]{--pc:#19C26B} .sbr[data-p="1"]{--pc:#3D8BFF} .sbr[data-p="2"]{--pc:#FF8A2A}
+.sbr.out{opacity:.45}
+.sb.n3 .sbr{height:11vw}
+.sb.n3 .sbr .pt{font-size:8.6vw}
+.sb.n3.final .sbr .pt{font-size:7vw}
 .sbr .nm{font-family:var(--f-body);font-weight:700;font-size:5.4vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:1.6vw;min-width:0}
 .sbr .nm .tri{flex:none;width:0;height:0;border-left:2.2vw solid var(--yellow);border-top:1.5vw solid transparent;border-bottom:1.5vw solid transparent;opacity:0;transition:opacity .2s}
 .sbr.on .nm .tri{opacity:1}
@@ -210,11 +232,11 @@ html.ov{padding:0!important}
 .sheet h2{margin:0;font-size:19px;font-weight:700;text-wrap:balance}
 .sheet .sub{color:var(--muted);font-size:13px;margin:-8px 0 0;line-height:1.6}
 .result{display:flex;justify-content:center;align-items:baseline;gap:18px;font-family:var(--f-num);font-weight:700;font-size:72px;line-height:.9}
-.result .a{color:var(--green)} .result .b{color:var(--blue)} .result .d{color:var(--faint);font-size:40px}
+.result .a,.result .c0{color:var(--green)} .result .b,.result .c1{color:var(--blue)} .result .c2{color:var(--orange)} .result .d{color:var(--faint);font-size:40px}
 .rnames{display:grid;grid-template-columns:1fr 1fr;font-size:12px;color:var(--muted);text-align:center;margin-top:-10px}
 .btns{display:flex;flex-direction:column;gap:8px}
 .final th{font-size:13px;color:var(--ink)}
-.final th:nth-child(2){color:var(--green)} .final th:nth-child(3){color:var(--blue)}
+.final th:nth-child(2){color:var(--green)} .final th:nth-child(3){color:var(--blue)} .final th:nth-child(4){color:var(--orange)}
 .final .fl{font-size:13px;font-weight:700;color:var(--muted)}
 .final .fv{font-family:var(--f-num);font-weight:800;font-size:40px;line-height:1.1;font-stretch:85%;color:var(--faint)}
 .final .fv.win{color:var(--ink)}
@@ -224,6 +246,7 @@ html.ov{padding:0!important}
 .field{display:flex;flex-direction:column;gap:8px}
 .lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two.n3{grid-template-columns:1fr 1fr 1fr}
 input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-radius:8px;border:1px solid var(--hair);background:var(--tile-2);color:var(--ink);padding:0 12px;font:inherit;font-size:16px}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--tile-2);border-radius:8px;padding:3px;gap:3px}
 .seg button{height:36px;border-radius:3px;font-weight:700;font-size:13px;color:var(--muted)}
@@ -257,9 +280,10 @@ input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-ra
     </div>
   </section>
 
-  <div class="teams">
+  <div class="teams" id="teams">
     <section class="tile team" data-p="0" id="team0"></section>
     <section class="tile team" data-p="1" id="team1"></section>
+    <section class="tile team" data-p="2" id="team2" hidden></section>
   </div>
 
   <div class="t-timers">
@@ -331,16 +355,21 @@ input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-ra
     <div class="th"><span class="side">SETUP</span><span class="tt">新しい試合</span><span class="side r"></span></div>
     <div class="tb">
     <div class="field">
-      <span class="lab">チーム名</span>
-      <div class="two">
-        <input type="text" id="nameA" maxlength="12" aria-label="チーム1の名前">
-        <input type="text" id="nameB" maxlength="12" aria-label="チーム2の名前">
+      <span class="lab">対戦人数</span>
+      <div class="seg" id="countSeg"><button type="button" data-v="2">2人（2チーム）</button><button type="button" data-v="3">3人（3チーム）</button></div>
+    </div>
+    <div class="field">
+      <span class="lab">名前</span>
+      <div class="two" id="nameRow">
+        <input type="text" id="nameA" maxlength="12" aria-label="1人目の名前">
+        <input type="text" id="nameB" maxlength="12" aria-label="2人目の名前">
+        <input type="text" id="nameC" maxlength="12" aria-label="3人目の名前" hidden>
       </div>
     </div>
     <div class="field">
       <span class="lab">第1セットの先攻</span>
-      <div class="seg" id="firstSeg"><button type="button" data-v="0">チーム1</button><button type="button" data-v="1">チーム2</button></div>
-      <span class="note">セットごとに先攻と後攻が入れ替わります。</span>
+      <div class="seg" id="firstSeg"></div>
+      <span class="note" id="firstNote">セットごとに先攻と後攻が入れ替わります。</span>
     </div>
     <div class="divider"></div>
     <div class="field">
@@ -382,7 +411,7 @@ input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-ra
       <label class="check"><input type="checkbox" id="showClock"> 残り時間を画面に表示する</label>
     </div>
     <div class="divider"></div>
-    <label class="check"><input type="checkbox" id="threeMiss"> 3回連続ミスでそのセット負け</label>
+    <label class="check"><input type="checkbox" id="threeMiss"> <span id="threeMissLbl">3回連続ミスでそのセット負け</span></label>
     <div class="btns">
       <button class="btn primary" type="submit">この設定で試合開始</button>
       <button class="btn" type="button" id="cancelSettings">閉じる</button>
@@ -446,6 +475,7 @@ const MQ_TOPIC=code=>'molkky-scoreboard/v1/'+code;
 const KEY='molkky-v3';
 const QS=new URLSearchParams(location.search);
 if(QS.get('overlay')){runOverlay(QS.get('overlay').toUpperCase().replace(/[^A-Z0-9]/g,''));return;}
+const DEF_NAMES=['チームA','チームB','チームC'];
 const DEF={names:['チームA','チームB'],format:{mode:'race',n:3},threeMiss:true,firstStarter:0,timeLimit:20,showClock:false};
 const $=id=>document.getElementById(id);
 let S, ui={layout:'grid',cast:false,room:null};
@@ -457,32 +487,41 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify({S,ui}));}catch(e){}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.S&&d.S.sets&&d.S.clock)return d;}catch(e){}return null;}
 
 const fmtLabel=f=>f.mode==='race'?`${f.n}セット先取`:(f.n===1?'1セット':`${f.n}セット勝負`);
-const firstOf=i=>(S.cfg.firstStarter+i)%2;
+const NP=()=>S.cfg.names.length;
+const PL=()=>[...Array(NP()).keys()];
+const firstOf=i=>(S.cfg.firstStarter+i)%NP();
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mmss=ms=>{const t=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;};
 
 function evalSet(set,i){
-  const s=[0,0],m=[0,0],log=[[],[]],hist=[[0],[0]];let turn=firstOf(i),winner=null,reason='',last=null;
+  const N=NP(),s=Array(N).fill(0),m=Array(N).fill(0),out=Array(N).fill(false),log=s.map(()=>[]),hist=s.map(()=>[0]);
+  let turn=firstOf(i),winner=null,reason='',last=null;
+  const nextOf=p=>{for(let k=1;k<=N;k++){const q=(p+k)%N;if(!out[q])return q;}return p;};
   for(const t of set.throws){
     if(winner!==null)break;
-    const p=turn;last={p,t,burst:false};
-    if(t===0){m[p]++;log[p].push('×');if(S.cfg.threeMiss&&m[p]>=3){winner=1-p;reason='miss';}}
+    const p=turn;last={p,t,burst:false,out:false};
+    if(t===0){m[p]++;log[p].push('×');
+      if(S.cfg.threeMiss&&m[p]>=3){out[p]=true;last.out=true;
+        const alive=s.map((_,q)=>q).filter(q=>!out[q]);
+        if(alive.length===1){winner=alive[0];reason='miss';}}}
     else{m[p]=0;s[p]+=t;if(s[p]>50){s[p]=25;last.burst=true;log[p].push(t+'↓');}else log[p].push(String(t));
       if(s[p]===50){winner=p;reason='fifty';}}
     hist[p].push(s[p]);
-    turn=1-p;
+    turn=nextOf(p);
   }
-  return {s,m,log,hist,turn,winner,reason,last};
+  return {s,m,out,log,hist,turn,winner,reason,last};
 }
 function matchInfo(){
-  const ev=S.sets.map(evalSet),wins=[0,0];
+  const ev=S.sets.map(evalSet),N=NP(),wins=Array(N).fill(0);
   let done=0;ev.forEach(e=>{if(e.winner!==null){wins[e.winner]++;done++;}});
   const f=S.cfg.format;let over=false,champ=null;
-  const totals=[0,1].map(p=>ev.reduce((a,e)=>a+e.s[p],0));
-  if(f.mode==='race'){if(wins[0]>=f.n){over=true;champ=0}else if(wins[1]>=f.n){over=true;champ=1}}
-  else if(done>=f.n){over=true;champ=wins[0]===wins[1]?null:(wins[0]>wins[1]?0:1);}
+  const totals=PL().map(p=>ev.reduce((a,e)=>a+e.s[p],0));
+  if(f.mode==='race'){const w=PL().find(p=>wins[p]>=f.n);if(w!==undefined){over=true;champ=w;}}
+  else if(done>=f.n){over=true;const mx=Math.max(...wins),top=PL().filter(p=>wins[p]===mx);champ=top.length===1?top[0]:null;}
   return {ev,wins,over,champ,totals};
 }
+const whyText=(E,n)=>E.reason==='fifty'?'ちょうど50点に到達':(NP()===2?`${esc(n[1-E.winner])}が3回連続ミス`:'ほかの全員が3回連続ミスで脱落');
+const winsText=M=>M.wins.join(' − ');
 
 /* ---------- match clock ---------- */
 const hasClock=()=>S.cfg.timeLimit>0;
@@ -544,15 +583,18 @@ function render(){
   const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],f=S.cfg.format,n=S.cfg.names;
   $('setno').textContent=`SET ${i+1}`;
   $('fmt').textContent=fmtLabel(f)+(S.cfg.threeMiss?'・3連続ミス負け':'');
-  $('setwins').innerHTML=`<span class="chip g">${M.wins[0]}</span><span class="chip b">${M.wins[1]}</span>`;
-  [0,1].forEach(p=>{
-    const el=$('team'+p),sc=E.s[p];
+  $('setwins').innerHTML=PL().map(p=>`<span class="chip c${p}">${M.wins[p]}</span>`).join('');
+  const N=NP();$('teams').classList.toggle('n3',N===3);$('team2').hidden=N<3;
+  PL().forEach(p=>{
+    const el=$('team'+p),sc=E.s[p],ord=(p-firstOf(i)+N)%N;
     el.classList.toggle('active',E.winner===null&&E.turn===p);
-    el.innerHTML=`<div class="th"><span class="side"><span class="dot"></span></span><span class="tt">${esc(n[p])}</span><span class="side r">${firstOf(i)===p?'先攻':'後攻'}</span></div>
+    el.classList.toggle('out',!!E.out[p]);
+    const tag=N===2?(ord===0?'先攻':'後攻'):(ord+1)+'番';
+    el.innerHTML=`<div class="th"><span class="side"><span class="dot"></span></span><span class="tt">${esc(n[p])}</span><span class="side r">${tag}</span></div>
       <div class="tb">
         <div class="scoreRow"><span class="score">${sc}</span><span class="unit">/ 50 pt</span></div>
         ${spark(E.hist[p])}
-        <div class="foot"><span class="remain">あと<b>${50-sc}</b></span>${S.cfg.threeMiss?`<span class="misses" aria-label="連続ミス${E.m[p]}回">${[0,1,2].map(k=>`<i class="${k<E.m[p]?'on':''}"></i>`).join('')}</span>`:''}</div>
+        <div class="foot"><span class="remain">あと<b>${50-sc}</b></span>${E.out[p]?'<span class="outtag">脱落</span>':S.cfg.threeMiss?`<span class="misses" aria-label="連続ミス${E.m[p]}回">${[0,1,2].map(k=>`<i class="${k<E.m[p]?'on':''}"></i>`).join('')}</span>`:''}</div>
         <div class="log"><span>${E.log[p].slice(-10).join('  ')||'—'}</span></div>
       </div>`;
   });
@@ -567,29 +609,29 @@ function renderHistory(M){
   const n=S.cfg.names;
   const rows=M.ev.map((e,k)=>{
     const cur=e.winner===null;
-    const w=cur?'<span class="chip ghost">進行中</span>':`<span class="chip ${e.winner?'b':'g'}">${esc(n[e.winner]).slice(0,6)}</span>`;
-    const why=cur?'':e.reason==='fifty'?'50点':'3連続ミス';
-    return `<tr class="${cur?'cur':''}"><td class="n">${k+1}</td><td class="n">${e.s[0]}</td><td class="n">${e.s[1]}</td><td>${w}</td><td class="r note">${why}</td></tr>`;
+    const w=cur?'<span class="chip ghost">進行中</span>':`<span class="chip c${e.winner}">${esc(n[e.winner]).slice(0,6)}</span>`;
+    const why=cur?'':e.reason==='fifty'?'50点':(NP()===2?'3連続ミス':'他全員脱落');
+    return `<tr class="${cur?'cur':''}"><td class="n">${k+1}</td>${PL().map(p=>`<td class="n">${e.s[p]}</td>`).join('')}<td>${w}</td><td class="r note">${why}</td></tr>`;
   }).join('');
-  $('history').innerHTML=`<table><thead><tr><th class="n">SET</th><th class="n">${esc(n[0]).slice(0,5)}</th><th class="n">${esc(n[1]).slice(0,5)}</th><th>勝者</th><th class="r">決め手</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $('history').innerHTML=`<table><thead><tr><th class="n">SET</th>${PL().map(p=>`<th class="n">${esc(n[p]).slice(0,5)}</th>`).join('')}<th>勝者</th><th class="r">決め手</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 function finalTable(M){
   const n=S.cfg.names,c=M.champ;
   const cell=(p,v)=>`<td class="n fv${c===p?' win':''}">${v}</td>`;
-  return `<table class="final"><thead><tr><th></th><th class="n">${esc(n[0])}</th><th class="n">${esc(n[1])}</th></tr></thead><tbody>
-    <tr><td class="fl">獲得セット</td>${cell(0,M.wins[0])}${cell(1,M.wins[1])}</tr>
-    <tr><td class="fl">合計得点</td>${cell(0,M.totals[0])}${cell(1,M.totals[1])}</tr>
+  return `<table class="final"><thead><tr><th></th>${PL().map(p=>`<th class="n">${esc(n[p])}</th>`).join('')}</tr></thead><tbody>
+    <tr><td class="fl">獲得セット</td>${PL().map(p=>cell(p,M.wins[p])).join('')}</tr>
+    <tr><td class="fl">合計得点</td>${PL().map(p=>cell(p,M.totals[p])).join('')}</tr>
   </tbody></table>
-  <table><thead><tr><th class="n">SET</th><th class="n">${esc(n[0]).slice(0,5)}</th><th class="n">${esc(n[1]).slice(0,5)}</th><th>勝者</th></tr></thead><tbody>${M.ev.map((e,k)=>`<tr><td class="n">${k+1}</td><td class="n">${e.s[0]}</td><td class="n">${e.s[1]}</td><td>${e.winner===null?'—':`<span class="chip ${e.winner?'b':'g'}">${esc(n[e.winner]).slice(0,6)}</span>`}</td></tr>`).join('')}</tbody></table>`;
+  <table><thead><tr><th class="n">SET</th>${PL().map(p=>`<th class="n">${esc(n[p]).slice(0,5)}</th>`).join('')}<th>勝者</th></tr></thead><tbody>${M.ev.map((e,k)=>`<tr><td class="n">${k+1}</td>${PL().map(p=>`<td class="n">${e.s[p]}</td>`).join('')}<td>${e.winner===null?'—':`<span class="chip c${e.winner}">${esc(n[e.winner]).slice(0,6)}</span>`}</td></tr>`).join('')}</tbody></table>`;
 }
 function renderResult(M,E,i){
   const ov=$('resultOv'),sh=$('resultSheet'),n=S.cfg.names;
   if(E.winner===null){ov.hidden=true;return;}
-  const w=E.winner,why=E.reason==='fifty'?'ちょうど50点に到達':`${esc(n[1-w])}が3回連続ミス`;
-  const score=`<div class="result"><span class="a">${M.wins[0]}</span><span class="d">–</span><span class="b">${M.wins[1]}</span></div><div class="rnames"><span>${esc(n[0])}</span><span>${esc(n[1])}</span></div>`;
+  const w=E.winner,why=whyText(E,n);
+  const score=`<div class="result">${PL().map(p=>`<span class="c${p}">${M.wins[p]}</span>`).join('<span class="d">–</span>')}</div><div class="rnames" style="grid-template-columns:repeat(${NP()},1fr)">${PL().map(p=>`<span>${esc(n[p])}</span>`).join('')}</div>`;
   let head,btns;
   if(M.over){
-    head=`<h2>${M.champ===null?`試合終了　${M.wins[0]} − ${M.wins[1]}`:esc(n[M.champ])+'の勝利'}</h2><p class="sub">試合終了　最終セット：${esc(n[w])}（${why}）</p>`;
+    head=`<h2>${M.champ===null?`試合終了　${winsText(M)}`:esc(n[M.champ])+'の勝利'}</h2><p class="sub">試合終了　最終セット：${esc(n[w])}（${why}）</p>`;
     btns=`<button class="btn primary" type="button" data-act="rematch">同じ設定でもう一試合</button><button class="btn" type="button" data-act="settings">設定を変えて新しい試合</button><button class="btn" type="button" data-act="undo">直前の入力を取り消す</button>`;
     sh.innerHTML=head+finalTable(M)+`<div class="btns">${btns}</div>`;
     ov.hidden=false;return;
@@ -611,7 +653,8 @@ function input(v){
   S.sets[i].throws.push(v);S.lastAt=Date.now();clockRun(true);buzz(v?8:[20,40,20]);
   const E=evalSet(S.sets[i],i);
   if(E.last.burst){toast(`バースト　${S.cfg.names[E.last.p]}は25点に戻ります`);buzz([40,60,40]);}
-  else if(E.winner===null&&v===0&&S.cfg.threeMiss&&E.m[E.last.p]===2)toast(`${S.cfg.names[E.last.p]}：次のミスでセット負け`);
+  else if(E.winner===null&&E.last.out)toast(`${S.cfg.names[E.last.p]}：3回連続ミスで脱落`);
+  else if(E.winner===null&&v===0&&S.cfg.threeMiss&&E.m[E.last.p]===2)toast(`${S.cfg.names[E.last.p]}：次のミスで${NP()===2?'セット負け':'脱落'}`);
   render();
 }
 function undo(){
@@ -672,19 +715,25 @@ setInterval(tick,250);
 let draft;
 function openSettings(){
   draft=clone(S.cfg);if(draft.timeLimit==null)draft.timeLimit=DEF.timeLimit;
-  $('nameA').value=draft.names[0];$('nameB').value=draft.names[1];
+  ['nameA','nameB','nameC'].forEach((id,k)=>$(id).value=draft.names[k]||DEF_NAMES[k]);
   $('threeMiss').checked=draft.threeMiss;$('showClock').checked=!!draft.showClock;syncSettings();$('settingsOv').hidden=false;
 }
 function syncSettings(){
   const f=draft.format,t=draft.timeLimit;
   $('nOut').textContent=f.n;$('fmtPreview').textContent=fmtLabel(f);
   document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===f.mode));
-  document.querySelectorAll('#firstSeg button').forEach((b,k)=>{b.setAttribute('aria-pressed',+b.dataset.v===draft.firstStarter);b.textContent=($(k?'nameB':'nameA').value.trim()||DEF.names[k]);});
+  const N=draft.names.length,ids=['nameA','nameB','nameC'];
+  if(draft.firstStarter>=N)draft.firstStarter=0;
+  document.querySelectorAll('#countSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===N));
+  $('nameC').hidden=N<3;$('nameRow').classList.toggle('n3',N===3);
+  $('firstSeg').innerHTML=[...Array(N).keys()].map(k=>`<button type="button" data-v="${k}" aria-pressed="${k===draft.firstStarter}">${esc($(ids[k]).value.trim()||DEF_NAMES[k])}</button>`).join('');
+  $('firstNote').textContent=N===2?'セットごとに先攻と後攻が入れ替わります。':'投げる順番は名前の並び順です。セットごとに最初に投げる人が1人ずつずれます。';
+  $('threeMissLbl').textContent=N===2?'3回連続ミスでそのセット負け':'3回連続ミスで脱落（最後の1人が残ったらそのセット獲得）';
   document.querySelectorAll('#presets button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===f.mode&&+b.dataset.n===f.n));
   document.querySelectorAll('#timePresets button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.t===t));
   $('tOut').textContent=t||'—';
   $('fmtNote').textContent=f.mode==='race'?`先に${f.n}セット取った方の勝ち（最大${f.n*2-1}セット）。`:
-    (f.n===1?'1セットで決着。':`${f.n}セットすべて行い、取ったセット数で勝敗を決めます。${f.n%2===0?'同数の場合は、セット数と合計得点を表示して終わります。':''}`);
+    (f.n===1?'1セットで決着。':`${f.n}セットすべて行い、取ったセット数で勝敗を決めます。同数の場合は、セット数と合計得点を表示して終わります。`);
   const ms=[10,5,2].filter(m=>m<t);
   $('timeNote').textContent=t?`最初の得点入力で計測が始まり、時計をタップすると一時停止できます。${ms.map(m=>'残り'+m+'分').join('・')}${ms.length?'・':''}終了時に画面上部へ通知します。通知が出ても試合は止まりません。`:'時間制限なしで最後まで行います。';
 }
@@ -696,11 +745,12 @@ $('nMinus').onclick=()=>{draft.format.n=Math.max(1,draft.format.n-1);syncSetting
 $('nPlus').onclick=()=>{draft.format.n=Math.min(10,draft.format.n+1);syncSettings();};
 $('tMinus').onclick=()=>{draft.timeLimit=Math.max(0,draft.timeLimit-1);syncSettings();};
 $('tPlus').onclick=()=>{draft.timeLimit=Math.min(120,draft.timeLimit+1);syncSettings();};
-['nameA','nameB'].forEach(id=>$(id).addEventListener('input',syncSettings));
+['nameA','nameB','nameC'].forEach(id=>$(id).addEventListener('input',syncSettings));
+$('countSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const N=+b.dataset.v;draft.names=[...Array(N).keys()].map(k=>$(['nameA','nameB','nameC'][k]).value.trim()||DEF_NAMES[k]);syncSettings();});
 $('cancelSettings').onclick=()=>{$('settingsOv').hidden=true;};
 $('settingsForm').addEventListener('submit',e=>{
   e.preventDefault();
-  draft.names=[$('nameA').value.trim()||DEF.names[0],$('nameB').value.trim()||DEF.names[1]];
+  draft.names=draft.names.map((_,k)=>$(['nameA','nameB','nameC'][k]).value.trim()||DEF_NAMES[k]);
   draft.threeMiss=$('threeMiss').checked;draft.showClock=$('showClock').checked;
   S=newMatch(draft);$('settingsOv').hidden=true;render();
 });
@@ -730,7 +780,7 @@ $('resultSheet').addEventListener('click',e=>{
 window.addEventListener('resize',fitKeys);
 function openEnd(){
   const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],n=S.cfg.names;
-  $('endSummary').textContent=`現在 第${i+1}セット、セットカウント ${n[0]} ${M.wins[0]} – ${M.wins[1]} ${n[1]}（このセット ${E.s[0]} – ${E.s[1]}）。`;
+  $('endSummary').textContent=`現在 第${i+1}セット。獲得セット ${n.map((x,k)=>x+' '+M.wins[k]).join('、')}（このセットの得点 ${E.s.join(' – ')}）。`;
   $('endOv').hidden=false;
 }
 $('openEnd').onclick=openEnd;
@@ -756,7 +806,7 @@ function runOverlay(code){
   w.innerHTML=`<span class="ovwait" id="oWait">スコア待機中　ROOM ${code}</span>
   <div class="sb" id="oSb" hidden>
     <div class="sbh"><span class="st" id="oSet">SET 1</span><span class="fm" id="oFmt"></span><span class="lv"><i></i>LIVE</span></div>
-    ${[0,1].map(p=>`<div class="sbr" data-p="${p}" id="oR${p}"><i class="clr"></i><span class="nm"><span class="tri"></span><span class="nmt"></span><span class="ms"></span></span><span class="sw"></span><span class="pt"></span></div>`).join('')}
+    <div id="oRows"></div>
     <div class="sbf" id="oFlash"></div>
   </div>`;
   document.body.appendChild(w);
@@ -768,20 +818,23 @@ function runOverlay(code){
     g('oWait').hidden=true;g('oSb').hidden=false;
     g('oSet').textContent=d.over?'FINAL':'SET '+d.set;g('oSb').classList.toggle('final',!!d.over);
     g('oFmt').textContent=d.fmt;
-    [0,1].forEach(p=>{
-      const r=g('oR'+p);
-      r.classList.toggle('on',d.turn===p);
+    const N=d.names.length,rows=g('oRows');
+    if(rows.children.length!==N)rows.innerHTML=d.names.map((_,p)=>`<div class="sbr" data-p="${p}" id="oR${p}"><i class="clr"></i><span class="nm"><span class="tri"></span><span class="nmt"></span><span class="ms"></span></span><span class="sw"></span><span class="pt"></span></div>`).join('');
+    g('oSb').classList.toggle('n3',N===3);
+    d.names.forEach((_,p)=>{
+      const r=g('oR'+p),isOut=!d.over&&d.out&&d.out[p];
+      r.classList.toggle('on',d.turn===p);r.classList.toggle('out',!!isOut);
       r.querySelector('.nmt').textContent=d.names[p];
-      r.querySelector('.ms').innerHTML=(!d.over&&d.threeMiss&&d.m[p])?[0,1,2].map(k=>`<i class="${k<d.m[p]?'on':''}"></i>`).join(''):'';
+      r.querySelector('.ms').innerHTML=isOut?'<span style="font-size:.6em;color:#FF6B6B">脱落</span>':(!d.over&&d.threeMiss&&d.m[p])?[0,1,2].map(k=>`<i class="${k<d.m[p]?'on':''}"></i>`).join(''):'';
       r.querySelector('.sw').textContent=d.wins[p];
       r.querySelector('.pt').innerHTML=d.over?`${d.totals[p]}<small>合計得点</small>`:String(d.s[p]);
     });
-    if(d.over){flash(`${d.wins[0]} − ${d.wins[1]}${d.champ===null?'':'　'+d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
+    if(d.over){flash(`${d.wins.join(' − ')}${d.champ===null?'':'　'+d.names[d.champ]+'　WIN'}`,'win',0);lastK=d.last&&d.last.k;return;}
     if(d.setWinner!==null&&d.setWinner!==undefined){flash(`${d.names[d.setWinner]} が SET ${d.set} 獲得`,'win',0);lastK=d.last&&d.last.k;return;}
     const k=d.last&&d.last.k;
     if(k&&k!==lastK&&lastK!==null){
       const L=d.last,nm=d.names[L.p];
-      if(L.t===0)flash(`${nm}　ミス`,'miss',3000);
+      if(L.t===0)flash(L.out?`${nm}　3回連続ミスで脱落`:`${nm}　ミス`,'miss',L.out?5000:3000);
       else if(L.burst)flash(`${nm}　+${L.t}　バースト → 25点`,'burst',4000);
       else flash(`${nm}　+${L.t}`,'',2500);
     }else if(lastK===null||!k)g('oFlash').classList.remove('show');
@@ -798,9 +851,9 @@ const newRoom=()=>Array.from({length:6},()=>ROOM_CH[Math.floor(Math.random()*ROO
 let cast=null,castT=null;
 function castState(){
   const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],th=S.sets[i].throws;
-  return {v:1,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,threeMiss:S.cfg.threeMiss,
+  return {v:1,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,out:E.out,threeMiss:S.cfg.threeMiss,
     turn:E.winner===null?E.turn:null,wins:M.wins,setWinner:E.winner,reason:E.reason,over:M.over,champ:M.champ,totals:M.totals,
-    last:E.last?{p:E.last.p,t:E.last.t,burst:E.last.burst,k:i+':'+th.length}:null};
+    last:E.last?{p:E.last.p,t:E.last.t,burst:E.last.burst,out:E.last.out,k:i+':'+th.length}:null};
 }
 function castStart(){
   if(cast)return;
