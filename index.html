@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111A2B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+<title>モルック スコアボード</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Noto+Sans+JP:wght@500;700;900&display=swap">
+<style>
+/* Layout: dark operations dashboard — tiles with a titled header strip; the throwing team's tile turns solid; phone = one column of tiles, tablet = 3-column board */
+:root{
+  color-scheme:light;
+  --bg:#EEF1F5; --tile:#FFFFFF; --tile-2:#EDF0F4; --hair:#E0E4EA; --ink:#0E1522; --muted:#4E586A; --faint:#98A1B0;
+  --green:#0F9D58; --blue:#1A6FE0; --red:#E2363B; --yellow:#FFC531; --on-color:#FFFFFF; --pin-ink:#FFFFFF; --pin:#111A2B;
+  --scrim:rgba(14,21,34,.45);
+  --f-num:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  --r:10px;
+}
+html,body{height:100%}
+body{overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:var(--f-body);-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+.board{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:8px;
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));padding-block:10px}
+.board>*{min-width:0;flex:none}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (min-width:700px){.board{gap:12px;padding-block:16px}}
+/* tiles */
+.tile{background:var(--tile);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(14,21,34,.06),0 4px 14px rgba(14,21,34,.06)}
+.th{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-bottom:1px solid var(--hair);font-size:14px;font-weight:700;color:var(--ink)}
+.th .tt{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th .side{flex:0 0 52px;display:flex;align-items:center;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.th .side.r{justify-content:flex-end}
+.tb{padding:12px;display:flex;flex-direction:column;gap:10px;flex:1}
+.linkbtn{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.06em;padding:6px 0}
+.tbtn{height:36px;padding:0 14px;border-radius:8px;background:var(--tile-2);font-size:13px;font-weight:700}
+.gear{width:36px;height:36px;background:var(--tile-2);display:grid;place-items:center;color:var(--muted);border-radius:8px}
+.gear svg{width:18px;height:18px}
+
+/* top tile */
+.t-top{background:var(--pin);color:#fff}
+.t-top .tbtn,.t-top .gear{background:rgba(255,255,255,.12);color:#fff}
+.t-top .tb{flex-direction:row;align-items:center;gap:10px;padding:6px 6px 6px 12px}
+.brand{display:none;font-family:var(--f-num);font-weight:600;font-size:13px;letter-spacing:.2em;color:var(--muted)}
+.setinfo{flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.setinfo .s{font-family:var(--f-num);font-weight:700;font-size:20px}
+.setinfo .f{font-size:12px;font-weight:500;color:rgba(255,255,255,.75)}
+.setwins{display:flex;align-items:center;gap:6px;font-family:var(--f-num);font-weight:500;font-size:15px}
+.chip{min-width:28px;height:26px;padding:0 7px;border-radius:6px;display:inline-grid;place-items:center;color:var(--on-color);font-family:var(--f-num);font-weight:800;font-size:15px}
+.chip.g{background:var(--green)} .chip.b{background:var(--blue)} .chip.r{background:var(--red)} .chip.y{background:var(--yellow);color:var(--pin-ink)}
+.chip.ghost{background:var(--tile-2);color:var(--muted)}
+
+/* team tiles */
+.team[data-p="0"]{--pc:var(--green)} .team[data-p="1"]{--pc:var(--blue)}
+.team{transition:background .25s}
+.team .th{border-bottom-color:var(--hair)}
+.team .dot{width:8px;height:8px;border-radius:50%;background:var(--pc)}
+.team.active{background:var(--pc)}
+.team.active .th{border-bottom-color:rgba(255,255,255,.22);color:var(--on-color)}
+.team.active .th .side{color:rgba(255,255,255,.8)}
+.team.active .dot{background:var(--on-color)}
+.team .tb{gap:5px;padding:8px 12px 10px}
+.scoreRow{display:flex;align-items:flex-end;gap:6px}
+.score{font-family:var(--f-num);font-weight:700;font-size:clamp(52px,15vw,80px);line-height:.85;letter-spacing:-.02em;font-stretch:80%;color:var(--pc);font-variant-numeric:tabular-nums}
+.team.active .score{color:var(--on-color)}
+.unit{font-family:var(--f-num);font-weight:600;font-size:13px;color:var(--muted);padding-bottom:4px}
+.team.active .unit{color:rgba(255,255,255,.8)}
+.spark{width:100%;height:28px;display:block}
+.spark .grid{stroke:var(--hair)}
+.team.active .spark .grid{stroke:rgba(255,255,255,.22)}
+.spark .ln{fill:none;stroke:var(--pc);stroke-width:2.5;stroke-linejoin:round}
+.spark .pt{fill:var(--tile);stroke:var(--pc);stroke-width:2}
+.team.active .spark .ln{stroke:var(--on-color)}
+.team.active .spark .pt{fill:var(--pc);stroke:var(--on-color)}
+.spark .lbl{fill:var(--muted);font-size:8px;font-family:var(--f-num)}
+.team.active .spark .lbl{fill:rgba(255,255,255,.75)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}
+.team.active .foot{color:rgba(255,255,255,.85)}
+.remain b{font-family:var(--f-num);font-weight:800;font-size:16px;color:var(--ink);margin-left:4px}
+.team.active .remain b{color:var(--on-color)}
+.misses{display:flex;gap:3px}
+.misses i{width:14px;height:14px;border-radius:2px;background:var(--tile-2)}
+.team.active .misses i{background:rgba(255,255,255,.28)}
+.misses i.on{background:var(--red)}
+.team.active .misses i.on{background:var(--on-color)}
+.log{font-family:var(--f-num);font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;direction:rtl;text-align:left}
+.log span{direction:ltr;unicode-bidi:isolate}
+.team.active .log{color:rgba(255,255,255,.8)}
+
+/* timers */
+.t-timers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.timer{text-align:left}
+.timer .tb{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px}
+.timer .big{font-family:var(--f-num);font-weight:700;font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.timer .cap{text-align:right;font-size:12px;font-weight:700;color:var(--muted);line-height:1.4}
+.timer.idle .big{color:var(--faint)}
+.timer .big{font-stretch:85%}
+.timer.over{background:var(--red)}
+.timer.over .th{border-bottom-color:rgba(255,255,255,.25);color:var(--on-color)}
+.timer.over .th .side,.timer.over .cap{color:rgba(255,255,255,.85)}
+.timer.over .big{color:var(--on-color)}
+.mclock{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.mclock .big{font-size:30px}
+.mclock.hide .big{font-size:18px;letter-spacing:.25em;color:var(--muted)}
+.mclock.warn .big{color:#C98A00}
+.mclock.crit .big{color:var(--red)}
+.mclock.ended .big{color:var(--ink);font-size:24px}
+.runDot{width:7px;height:7px;border-radius:50%;background:var(--faint);margin-right:5px}
+.mclock.run .runDot{background:var(--green);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* keypad */
+.t-keys{flex:1 1 auto!important;min-height:0}
+.t-keys .tb{gap:8px;min-height:0;padding:10px}
+.keys{flex:1;min-height:0;display:grid;gap:8px}
+.keys.grid{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr)}
+.keys.form{display:block;position:relative}
+.keys.form .inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--fw,280px);height:var(--fh,240px)}
+.pin{height:100%;min-height:44px;border-radius:10px;background:var(--pin);color:var(--pin-ink);font-family:var(--f-num);font-weight:800;font-size:clamp(24px,7vw,32px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.35);transition:transform .06s,filter .1s}
+.keys.form .pin{position:absolute;width:var(--d,60px);height:var(--d,60px);min-height:0;border-radius:50%}
+.pin:active{transform:scale(.94);background:var(--yellow);color:var(--ink)}
+.pin:disabled,.miss:disabled{opacity:.3;cursor:default}
+.actions{flex:none;display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.miss{height:56px;border-radius:10px;background:var(--red);color:#fff;font-weight:900;font-size:17px;letter-spacing:.3em}
+.undo{height:56px;border-radius:10px;background:var(--tile-2);font-weight:700;font-size:15px}
+.miss:active,.undo:active{transform:scale(.97)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-align:left;padding:4px 6px 8px}
+td{padding:7px 6px;border-top:1px solid var(--hair)}
+td.n,th.n{text-align:center;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+td.r,th.r{text-align:right}
+tr.cur td{color:var(--muted)}
+.empty{color:var(--muted);font-size:12px;padding:8px 0}
+
+/* live */
+.ldot{display:none;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;vertical-align:1px}
+.tbtn.live .ldot{display:inline-block;animation:blink 1.4s ease-in-out infinite}
+.setinfo{overflow:hidden}
+.setinfo .f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+@media (max-width:420px){.setinfo .f{display:none}.t-top .tbtn{padding:0 10px}}
+.caststat{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.caststat i{width:9px;height:9px;border-radius:50%;background:var(--faint)}
+.caststat.ok i{background:var(--green)} .caststat.ng i{background:var(--red)} .caststat.wait i{background:#C98A00}
+.urlbox{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--tile-2);border-radius:8px;padding:10px 12px;word-break:break-all;-webkit-user-select:all;user-select:all}
+.code{font-family:var(--f-num);font-weight:800;font-size:28px;letter-spacing:.12em}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.6}
+.steps b{font-weight:700}
+.warnbox{font-size:12px;line-height:1.6;color:#9A2A20;background:color-mix(in srgb,var(--red) 10%,var(--tile));border-radius:8px;padding:8px 10px}
+
+/* overlay mode (配信用表示) */
+html.ov,html.ov body{background:transparent!important;overflow:hidden;height:auto}
+html.ov{padding:0!important}
+.ovw{padding:1.2vw;font-family:var(--f-num)}
+.sb{background:rgba(14,21,34,.92);color:#fff;border-radius:1.6vw;overflow:hidden;box-shadow:0 .6vw 2vw rgba(0,0,0,.35)}
+.sbh{display:flex;align-items:center;gap:2vw;padding:1.2vw 2.6vw;background:rgba(255,255,255,.08);font-family:var(--f-body);font-weight:700;font-size:3.4vw;letter-spacing:.04em}
+.sbh .st{font-family:var(--f-num);font-weight:800;color:var(--yellow);letter-spacing:.08em}
+.sbh .fm{opacity:.7;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbh .lv{display:flex;align-items:center;gap:1vw;font-family:var(--f-num);font-weight:800;font-size:2.8vw;letter-spacing:.14em}
+.sbh .lv i{width:1.6vw;height:1.6vw;border-radius:50%;background:var(--red)}
+.sbr{position:relative;display:grid;grid-template-columns:1.6vw 1fr auto 15vw;align-items:center;gap:2.4vw;height:13vw;padding-right:2.6vw;border-top:1px solid rgba(255,255,255,.08)}
+.sbr .clr{height:100%;background:var(--pc)}
+.sbr[data-p="0"]{--pc:#19C26B} .sbr[data-p="1"]{--pc:#3D8BFF}
+.sbr .nm{font-family:var(--f-body);font-weight:700;font-size:5.4vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:1.6vw;min-width:0}
+.sbr .nm .tri{flex:none;width:0;height:0;border-left:2.2vw solid var(--yellow);border-top:1.5vw solid transparent;border-bottom:1.5vw solid transparent;opacity:0;transition:opacity .2s}
+.sbr.on .nm .tri{opacity:1}
+.sbr.on{background:linear-gradient(90deg,color-mix(in srgb,var(--pc) 28%,transparent),transparent 70%)}
+.sbr .ms{display:flex;gap:.8vw}
+.sbr .ms i{width:2vw;height:2vw;border-radius:.4vw;background:rgba(255,255,255,.16)}
+.sbr .ms i.on{background:var(--red)}
+.sbr .sw{min-width:6.4vw;height:6.4vw;padding:0 1.2vw;border-radius:1vw;background:rgba(255,255,255,.12);display:grid;place-items:center;font-weight:800;font-size:4.4vw}
+.sbr .pt{text-align:right;font-weight:800;font-stretch:80%;font-size:10vw;line-height:1;font-variant-numeric:tabular-nums}
+.sbr .pt small{display:block;font-family:var(--f-body);font-size:2.6vw;font-weight:500;opacity:.7;margin-top:.4vw}
+.sbf{display:flex;align-items:center;justify-content:center;gap:2vw;height:0;overflow:hidden;font-family:var(--f-body);font-weight:900;font-size:4.4vw;transition:height .25s;background:var(--yellow);color:var(--ink)}
+.sbf.show{height:8vw}
+.sbf.burst{background:var(--red);color:#fff}
+.sbf.miss{background:#5B6475;color:#fff}
+.sbf.win{background:#fff;color:var(--ink)}
+.ovwait{display:inline-block;font-family:var(--f-body);font-size:3vw;font-weight:700;color:#fff;background:rgba(14,21,34,.75);padding:1vw 2vw;border-radius:99px}
+
+/* toast + notice */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);transform:translate(-50%,8px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.notice{position:fixed;left:0;right:0;top:0;z-index:40;padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));transform:translateY(-120%);transition:transform .3s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.notice.show{transform:none;pointer-events:auto}
+.notice button{width:100%;max-width:560px;margin:0 auto;display:flex;align-items:center;gap:14px;text-align:left;background:var(--pin);color:#fff;border-radius:var(--r);padding:12px 16px;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.notice .nv{color:var(--yellow);font-family:var(--f-num);font-weight:800;font-size:44px;line-height:1;flex:none}
+.notice .nt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.notice .nt b{font-size:15px}
+.notice .nt span{font-size:12px;opacity:.75}
+
+/* sheets */
+.overlay{position:fixed;inset:0;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;z-index:20;
+  padding:16px max(10px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+@media (min-width:860px){.overlay{align-items:center}}
+.sheet{width:100%;max-width:520px;max-height:100%;overflow:auto;background:var(--tile);border-radius:var(--r);display:flex;flex-direction:column}
+.sheet .tb{gap:16px;padding:16px}
+.sheet h2{margin:0;font-size:19px;font-weight:700;text-wrap:balance}
+.sheet .sub{color:var(--muted);font-size:13px;margin:-8px 0 0;line-height:1.6}
+.result{display:flex;justify-content:center;align-items:baseline;gap:18px;font-family:var(--f-num);font-weight:700;font-size:72px;line-height:.9}
+.result .a{color:var(--green)} .result .b{color:var(--blue)} .result .d{color:var(--faint);font-size:40px}
+.rnames{display:grid;grid-template-columns:1fr 1fr;font-size:12px;color:var(--muted);text-align:center;margin-top:-10px}
+.btns{display:flex;flex-direction:column;gap:8px}
+.final th{font-size:13px;color:var(--ink)}
+.final th:nth-child(2){color:var(--green)} .final th:nth-child(3){color:var(--blue)}
+.final .fl{font-size:13px;font-weight:700;color:var(--muted)}
+.final .fv{font-family:var(--f-num);font-weight:800;font-size:40px;line-height:1.1;font-stretch:85%;color:var(--faint)}
+.final .fv.win{color:var(--ink)}
+.btn{height:50px;border-radius:10px;background:var(--tile-2);color:var(--ink);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+.btn.primary{background:var(--pin);color:#fff}
+.btn.danger{background:var(--red);color:#fff}
+.field{display:flex;flex-direction:column;gap:8px}
+.lab{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-radius:8px;border:1px solid var(--hair);background:var(--tile-2);color:var(--ink);padding:0 12px;font:inherit;font-size:16px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--tile-2);border-radius:8px;padding:3px;gap:3px}
+.seg button{height:36px;border-radius:3px;font-weight:700;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--tile);color:var(--ink);box-shadow:0 1px 3px rgba(14,21,34,.15)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{height:34px;padding:0 13px;border-radius:8px;background:var(--tile-2);font-size:13px;font-weight:700;color:var(--muted)}
+.chips button[aria-pressed="true"]{background:var(--pin);color:#fff}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:40px;height:40px;border-radius:4px;background:var(--tile-2);font-size:20px}
+.stepper output{font-family:var(--f-num);font-weight:700;font-size:30px;min-width:2ch;text-align:center;font-variant-numeric:tabular-nums}
+.preview{font-weight:700;font-size:14px}
+.check{display:flex;align-items:center;gap:10px;font-size:14px}
+.check input{width:20px;height:20px;accent-color:var(--pin)}
+.note{font-size:12px;color:var(--muted);line-height:1.6}
+.divider{height:1px;background:var(--hair)}
+
+</style>
+
+</head>
+<body>
+<main class="board" id="board">
+  <section class="tile t-top">
+    <div class="tb">
+      <span class="brand">MÖLKKY</span>
+      <div class="setinfo"><span class="s" id="setno">SET 1</span><span class="f" id="fmt">3セット先取</span></div>
+      <div class="setwins" id="setwins"></div>
+      <button class="tbtn" id="openHistory" type="button">結果</button>
+      <button class="tbtn" id="openEnd" type="button">終了</button>
+      <button class="tbtn" id="openCast" type="button"><span class="ldot"></span>配信</button>
+      <button class="gear" id="openSettings" type="button" aria-label="試合の設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.2 7.5l2.1 1.2M17.7 15.3l2.1 1.2M4.2 16.5l2.1-1.2M17.7 8.7l2.1-1.2"/><circle cx="12" cy="12" r="7"/></svg></button>
+    </div>
+  </section>
+
+  <div class="teams">
+    <section class="tile team" data-p="0" id="team0"></section>
+    <section class="tile team" data-p="1" id="team1"></section>
+  </div>
+
+  <div class="t-timers">
+    <button class="tile timer idle" id="throw" type="button" aria-label="投擲タイマーをリセット">
+      <div class="th"><span class="side">THROW</span><span class="tt">投擲タイマー</span><span class="side r">1:00</span></div>
+      <div class="tb"><span class="big" id="tval">0:00</span><span class="cap" id="tlbl">得点入力で<br>計測開始</span></div>
+    </button>
+    <button class="tile timer mclock" id="mclock" type="button" aria-label="試合時間の開始・一時停止">
+      <div class="th"><span class="side">MATCH</span><span class="tt">試合時間</span><span class="side r" id="mlimit"></span></div>
+      <div class="tb"><span class="big" id="mval">● ● ●</span><span class="cap"><span class="runDot" style="display:inline-block"></span><span id="mstate">タップで開始</span></span></div>
+    </button>
+  </div>
+
+  <section class="tile t-keys">
+    <div class="th"><span class="side">INPUT</span><span class="tt">得点入力</span><span class="side r"><button class="linkbtn" id="lay" type="button">配置</button></span></div>
+    <div class="tb">
+      <div class="keys grid" id="keys"></div>
+      <div class="actions">
+        <button class="miss" id="miss" type="button">ミス</button>
+        <button class="undo" id="undo" type="button">取消</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="notice" id="notice" role="alert"><button type="button" id="noticeBtn"><span class="nv" id="noticeV">10</span><span class="nt"><b id="noticeT">試合時間 残り10分</b><span>タップして閉じる</span></span></button></div>
+<div class="overlay" id="historyOv" hidden><div class="sheet"><div class="th"><span class="side">SETS</span><span class="tt">セット結果</span><span class="side r"><button class="linkbtn" id="closeHistory" type="button">閉じる</button></span></div><div class="tb" id="history"></div></div></div>
+<div class="overlay" id="endOv" hidden><div class="sheet"><div class="th"><span class="side">END</span><span class="tt">試合の終了</span><span class="side r"></span></div><div class="tb">
+  <h2>この試合を終了しますか？</h2>
+  <p class="sub" id="endSummary"></p>
+  <div class="btns">
+    <button class="btn danger" type="button" id="endSame">終了して同じ設定で最初から</button>
+    <button class="btn" type="button" id="endSettings">終了して設定を変える</button>
+    <button class="btn" type="button" id="endCancel">試合を続ける</button>
+  </div>
+  <p class="note">終了すると、この試合の得点とセット結果は消えます。元に戻せません。</p>
+</div></div></div>
+<div class="overlay" id="castOv" hidden><div class="sheet"><div class="th"><span class="side">LIVE</span><span class="tt">ライブ配信にスコアを表示</span><span class="side r"><button class="linkbtn" id="castClose" type="button">閉じる</button></span></div><div class="tb">
+  <label class="check"><input type="checkbox" id="castOn"> 配信画面にスコアを送る</label>
+  <div class="caststat" id="castStat"><i></i><span>オフ</span></div>
+  <div class="field">
+    <span class="lab">ルームコード</span>
+    <span class="code" id="castCode">------</span>
+  </div>
+  <div class="field">
+    <span class="lab">表示用URL（配信アプリに貼り付け）</span>
+    <div class="urlbox" id="castUrl"></div>
+    <div class="btnrow"><button class="btn primary" type="button" id="castCopy">URLをコピー</button><button class="btn" type="button" id="castNew">コードを変更</button></div>
+    <div class="warnbox" id="castWarn" hidden></div>
+  </div>
+  <div class="divider"></div>
+  <div class="field">
+    <span class="lab">配信用スマホでの設定</span>
+    <ol class="steps">
+      <li>上のURLを、LINEやAirDropなどで配信用のスマホに送ります。</li>
+      <li><b>PRISM Live Studio</b>：配信画面を右にスワイプ →「ウィジェット」→「Web」→ URLを貼り付け、「レイヤーをロック」をオン。</li>
+      <li><b>Streamlabs</b>：「Layers」→ 追加 →「Add a custom item」→「Add a URL」に貼り付け。</li>
+      <li>表示されたスコアを、画面の上や隅に移動して大きさを調整します。</li>
+    </ol>
+    <span class="note">得点はこのスマホで入力します。配信中のスマホでアプリを切り替えるとカメラ映像が止まるので、入力用と配信用で端末を分けてください。スコアは無料の公開サーバーを通して届きます。コードを知っている人は誰でも見られるので、得点以外の情報は送っていません。</span>
+  </div>
+</div></div></div>
+<div class="overlay" id="resultOv" hidden><div class="sheet"><div class="th"><span class="side">RESULT</span><span class="tt">結果</span><span class="side r"></span></div><div class="tb" id="resultSheet"></div></div></div>
+
+<div class="overlay" id="settingsOv" hidden>
+  <form class="sheet" id="settingsForm">
+    <div class="th"><span class="side">SETUP</span><span class="tt">新しい試合</span><span class="side r"></span></div>
+    <div class="tb">
+    <div class="field">
+      <span class="lab">チーム名</span>
+      <div class="two">
+        <input type="text" id="nameA" maxlength="12" aria-label="チーム1の名前">
+        <input type="text" id="nameB" maxlength="12" aria-label="チーム2の名前">
+      </div>
+    </div>
+    <div class="field">
+      <span class="lab">第1セットの先攻</span>
+      <div class="seg" id="firstSeg"><button type="button" data-v="0">チーム1</button><button type="button" data-v="1">チーム2</button></div>
+      <span class="note">セットごとに先攻と後攻が入れ替わります。</span>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <span class="lab">試合形式</span>
+      <div class="chips" id="presets">
+        <button type="button" data-m="fixed" data-n="1">1セット</button>
+        <button type="button" data-m="fixed" data-n="2">2セット</button>
+        <button type="button" data-m="race" data-n="2">2セット先取</button>
+        <button type="button" data-m="race" data-n="3">3セット先取</button>
+        <button type="button" data-m="fixed" data-n="10">10セット勝負</button>
+      </div>
+      <div class="seg" id="modeSeg"><button type="button" data-v="race">先取</button><button type="button" data-v="fixed">セット数固定</button></div>
+      <div class="stepper">
+        <button type="button" id="nMinus" aria-label="セット数を減らす">−</button>
+        <output id="nOut">3</output>
+        <button type="button" id="nPlus" aria-label="セット数を増やす">＋</button>
+        <span class="preview" id="fmtPreview">3セット先取</span>
+      </div>
+      <span class="note" id="fmtNote"></span>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <span class="lab">試合時間</span>
+      <div class="chips" id="timePresets">
+        <button type="button" data-t="0">なし</button>
+        <button type="button" data-t="15">15分</button>
+        <button type="button" data-t="20">20分</button>
+        <button type="button" data-t="30">30分</button>
+        <button type="button" data-t="45">45分</button>
+        <button type="button" data-t="60">60分</button>
+      </div>
+      <div class="stepper">
+        <button type="button" id="tMinus" aria-label="試合時間を1分減らす">−</button>
+        <output id="tOut">20</output>
+        <button type="button" id="tPlus" aria-label="試合時間を1分増やす">＋</button>
+        <span class="preview">分</span>
+      </div>
+      <span class="note" id="timeNote"></span>
+      <label class="check"><input type="checkbox" id="showClock"> 残り時間を画面に表示する</label>
+    </div>
+    <div class="divider"></div>
+    <label class="check"><input type="checkbox" id="threeMiss"> 3回連続ミスでそのセット負け</label>
+    <div class="btns">
+      <button class="btn primary" type="submit">この設定で試合開始</button>
+      <button class="btn" type="button" id="cancelSettings">閉じる</button>
+    </div>
+    </div>
+  </form>
+</div>
+
+<script>
+/* 最小構成の MQTT 3.1.1 over WebSocket クライアント（QoS0・retain のみ） */
+function MQ(url,onMsg,onState){
+  const enc=new TextEncoder(),dec=new TextDecoder();
+  let ws=null,buf=new Uint8Array(0),ping=null,alive=false,closed=false,retry=1000,pid=1,pending=null;
+  const subs=new Set();
+  const str=s=>{const b=enc.encode(s);return [b.length>>8,b.length&255,...b];};
+  const vlen=n=>{const o=[];do{let d=n%128;n=Math.floor(n/128);if(n>0)d|=128;o.push(d);}while(n>0);return o;};
+  const pkt=(h,body)=>new Uint8Array([h,...vlen(body.length),...body]);
+  const send=p=>{if(ws&&ws.readyState===1)ws.send(p);};
+  const doSub=t=>{pid=pid%65535+1;send(pkt(0x82,[pid>>8,pid&255,...str(t),0]));};
+  const doPub=(t,payload,retain)=>send(pkt(0x30|(retain?1:0),[...str(t),...enc.encode(payload)]));
+  function parse(){
+    while(buf.length>=2){
+      let mult=1,n=0,i=1,b;
+      do{if(i>=buf.length)return;b=buf[i++];n+=(b&127)*mult;mult*=128;}while(b&128);
+      if(buf.length<i+n)return;
+      const type=buf[0]>>4,flags=buf[0]&15,body=buf.subarray(i,i+n);
+      buf=buf.slice(i+n);
+      if(type===2){
+        if(body[1]===0){alive=true;retry=1000;onState(true);subs.forEach(doSub);
+          if(pending){doPub(...pending);pending=null;}
+          clearInterval(ping);ping=setInterval(()=>send(new Uint8Array([0xC0,0])),25000);}
+        else ws.close();
+      }else if(type===3){
+        const tl=(body[0]<<8)|body[1],topic=dec.decode(body.subarray(2,2+tl));
+        let o=2+tl;if((flags>>1)&3)o+=2;
+        onMsg(topic,dec.decode(body.subarray(o)));
+      }
+    }
+  }
+  function connect(){
+    if(closed)return;
+    try{ws=new WebSocket(url,'mqtt');}catch(e){onState(false);setTimeout(connect,retry=Math.min(retry*2,15000));return;}
+    ws.binaryType='arraybuffer';buf=new Uint8Array(0);
+    ws.onopen=()=>send(pkt(0x10,[...str('MQTT'),4,2,0,60,...str('molkky-'+Math.random().toString(36).slice(2,12))]));
+    ws.onmessage=e=>{const d=new Uint8Array(e.data),nb=new Uint8Array(buf.length+d.length);nb.set(buf);nb.set(d,buf.length);buf=nb;parse();};
+    ws.onclose=()=>{alive=false;clearInterval(ping);onState(false);if(!closed)setTimeout(connect,retry=Math.min(retry*2,15000));};
+  }
+  connect();
+  return {
+    sub(t){subs.add(t);if(alive)doSub(t);},
+    pub(t,p,r){if(alive)doPub(t,p,r);else pending=[t,p,r];},
+    close(){closed=true;clearInterval(ping);try{ws&&ws.close();}catch(e){}},
+    get alive(){return alive;}
+  };
+}
+const MQ_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
+const MQ_TOPIC=code=>'molkky-scoreboard/v1/'+code;
+</script>
+<script>
+(function(){
+const KEY='molkky-v3';
+const QS=new URLSearchParams(location.search);
+if(QS.get('overlay')){runOverlay(QS.get('overlay').toUpperCase().replace(/[^A-Z0-9]/g,''));return;}
+const DEF={names:['チームA','チームB'],format:{mode:'race',n:3},threeMiss:true,firstStarter:0,timeLimit:20,showClock:false};
+const $=id=>document.getElementById(id);
+let S, ui={layout:'grid',cast:false,room:null};
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+function newMatch(cfg){return {cfg:clone(cfg),sets:[{throws:[]}],lastAt:null,
+  clock:{left:(cfg.timeLimit||0)*60000,since:null,fired:[]}};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({S,ui}));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.S&&d.S.sets&&d.S.clock)return d;}catch(e){}return null;}
+
+const fmtLabel=f=>f.mode==='race'?`${f.n}セット先取`:(f.n===1?'1セット':`${f.n}セット勝負`);
+const firstOf=i=>(S.cfg.firstStarter+i)%2;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mmss=ms=>{const t=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;};
+
+function evalSet(set,i){
+  const s=[0,0],m=[0,0],log=[[],[]],hist=[[0],[0]];let turn=firstOf(i),winner=null,reason='',last=null;
+  for(const t of set.throws){
+    if(winner!==null)break;
+    const p=turn;last={p,t,burst:false};
+    if(t===0){m[p]++;log[p].push('×');if(S.cfg.threeMiss&&m[p]>=3){winner=1-p;reason='miss';}}
+    else{m[p]=0;s[p]+=t;if(s[p]>50){s[p]=25;last.burst=true;log[p].push(t+'↓');}else log[p].push(String(t));
+      if(s[p]===50){winner=p;reason='fifty';}}
+    hist[p].push(s[p]);
+    turn=1-p;
+  }
+  return {s,m,log,hist,turn,winner,reason,last};
+}
+function matchInfo(){
+  const ev=S.sets.map(evalSet),wins=[0,0];
+  let done=0;ev.forEach(e=>{if(e.winner!==null){wins[e.winner]++;done++;}});
+  const f=S.cfg.format;let over=false,champ=null;
+  const totals=[0,1].map(p=>ev.reduce((a,e)=>a+e.s[p],0));
+  if(f.mode==='race'){if(wins[0]>=f.n){over=true;champ=0}else if(wins[1]>=f.n){over=true;champ=1}}
+  else if(done>=f.n){over=true;champ=wins[0]===wins[1]?null:(wins[0]>wins[1]?0:1);}
+  return {ev,wins,over,champ,totals};
+}
+
+/* ---------- match clock ---------- */
+const hasClock=()=>S.cfg.timeLimit>0;
+const clockLeft=()=>S.clock.left-(S.clock.since?Date.now()-S.clock.since:0);
+function clockRun(on){
+  if(!hasClock()||clockLeft()<=0)return;
+  if(on&&!S.clock.since)S.clock.since=Date.now();
+  if(!on&&S.clock.since){S.clock.left=clockLeft();S.clock.since=null;}
+}
+
+/* ---------- keypad ---------- */
+function buildKeys(){
+  const k=$('keys'),form=ui.layout==='form';k.className='keys '+(form?'form':'grid');
+  const order=form?[[7,9,8],[5,11,12,6],[3,10,4],[1,2]]:[[1,2,3,4],[5,6,7,8],[9,10,11,12]];
+  k.innerHTML='';
+  const host=form?k.appendChild(Object.assign(document.createElement('div'),{className:'inner'})):k;
+  order.forEach((row,r)=>row.forEach((n,c)=>{
+    const b=document.createElement('button');b.type='button';b.className='pin';b.textContent=n;b.dataset.v=n;
+    b.setAttribute('aria-label',n+'点');
+    if(form){b.dataset.r=r;b.dataset.c=c;b.dataset.k=row.length;}
+    host.appendChild(b);
+  }));
+  $('lay').textContent=form?'数字順':'配置';
+  requestAnimationFrame(fitKeys);
+}
+function fitKeys(){
+  if(ui.layout!=='form')return;
+  // 実際の並び：隣り合うピンが接するように詰め、段ごとに半個ずつずらす（奥 7-9-8 → 手前 1-2）
+  const keys=$('keys'),W=keys.clientWidth,H=keys.clientHeight,inner=keys.firstElementChild;
+  if(!inner||!W)return;
+  const g=6,vy=.87;
+  let d=Math.min((W-g*3)/4,(H-g*1.5)/(1+3*vy),84);
+  d=Math.max(36,Math.floor(d));
+  const px=d+g,py=Math.round(d*vy+g*.5);
+  inner.style.setProperty('--fw',(4*d+3*g)+'px');
+  inner.style.setProperty('--fh',(d+3*py)+'px');
+  inner.style.setProperty('--d',d+'px');
+  inner.querySelectorAll('.pin').forEach(b=>{
+    const r=+b.dataset.r,c=+b.dataset.c,k=+b.dataset.k;
+    b.style.left=((4-k)/2*px+c*px)+'px';b.style.top=(r*py)+'px';
+  });
+}
+
+/* ---------- render ---------- */
+function spark(h){
+  const W=200,H=46,pad=4,n=Math.max(h.length,8);
+  const x=i=>pad+i*(W-pad*2)/(n-1),y=v=>H-pad-(v/50)*(H-pad*2);
+  const pts=h.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const lastI=h.length-1;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <line class="grid" x1="0" x2="${W}" y1="${y(50)}" y2="${y(50)}" stroke-dasharray="2 3"/>
+    <line class="grid" x1="0" x2="${W}" y1="${y(25)}" y2="${y(25)}" stroke-dasharray="2 3"/>
+    <line class="grid" x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}"/>
+    ${h.length>1?`<polyline class="ln" points="${pts}" vector-effect="non-scaling-stroke"/>`:''}
+    <circle class="pt" cx="${x(lastI)}" cy="${y(h[lastI])}" r="3" vector-effect="non-scaling-stroke"/>
+  </svg>`;
+}
+function render(){
+  const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],f=S.cfg.format,n=S.cfg.names;
+  $('setno').textContent=`SET ${i+1}`;
+  $('fmt').textContent=fmtLabel(f)+(S.cfg.threeMiss?'・3連続ミス負け':'');
+  $('setwins').innerHTML=`<span class="chip g">${M.wins[0]}</span><span class="chip b">${M.wins[1]}</span>`;
+  [0,1].forEach(p=>{
+    const el=$('team'+p),sc=E.s[p];
+    el.classList.toggle('active',E.winner===null&&E.turn===p);
+    el.innerHTML=`<div class="th"><span class="side"><span class="dot"></span></span><span class="tt">${esc(n[p])}</span><span class="side r">${firstOf(i)===p?'先攻':'後攻'}</span></div>
+      <div class="tb">
+        <div class="scoreRow"><span class="score">${sc}</span><span class="unit">/ 50 pt</span></div>
+        ${spark(E.hist[p])}
+        <div class="foot"><span class="remain">あと<b>${50-sc}</b></span>${S.cfg.threeMiss?`<span class="misses" aria-label="連続ミス${E.m[p]}回">${[0,1,2].map(k=>`<i class="${k<E.m[p]?'on':''}"></i>`).join('')}</span>`:''}</div>
+        <div class="log"><span>${E.log[p].slice(-10).join('  ')||'—'}</span></div>
+      </div>`;
+  });
+  const done=E.winner!==null||M.over;
+  document.querySelectorAll('.pin').forEach(b=>b.disabled=done);
+  $('miss').disabled=done;
+  $('undo').disabled=S.sets.length===1&&S.sets[0].throws.length===0;
+  renderHistory(M);renderResult(M,E,i);
+  tick();save();castSend();
+}
+function renderHistory(M){
+  const n=S.cfg.names;
+  const rows=M.ev.map((e,k)=>{
+    const cur=e.winner===null;
+    const w=cur?'<span class="chip ghost">進行中</span>':`<span class="chip ${e.winner?'b':'g'}">${esc(n[e.winner]).slice(0,6)}</span>`;
+    const why=cur?'':e.reason==='fifty'?'50点':'3連続ミス';
+    return `<tr class="${cur?'cur':''}"><td class="n">${k+1}</td><td class="n">${e.s[0]}</td><td class="n">${e.s[1]}</td><td>${w}</td><td class="r note">${why}</td></tr>`;
+  }).join('');
+  $('history').innerHTML=`<table><thead><tr><th class="n">SET</th><th class="n">${esc(n[0]).slice(0,5)}</th><th class="n">${esc(n[1]).slice(0,5)}</th><th>勝者</th><th class="r">決め手</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function finalTable(M){
+  const n=S.cfg.names,c=M.champ;
+  const cell=(p,v)=>`<td class="n fv${c===p?' win':''}">${v}</td>`;
+  return `<table class="final"><thead><tr><th></th><th class="n">${esc(n[0])}</th><th class="n">${esc(n[1])}</th></tr></thead><tbody>
+    <tr><td class="fl">獲得セット</td>${cell(0,M.wins[0])}${cell(1,M.wins[1])}</tr>
+    <tr><td class="fl">合計得点</td>${cell(0,M.totals[0])}${cell(1,M.totals[1])}</tr>
+  </tbody></table>
+  <table><thead><tr><th class="n">SET</th><th class="n">${esc(n[0]).slice(0,5)}</th><th class="n">${esc(n[1]).slice(0,5)}</th><th>勝者</th></tr></thead><tbody>${M.ev.map((e,k)=>`<tr><td class="n">${k+1}</td><td class="n">${e.s[0]}</td><td class="n">${e.s[1]}</td><td>${e.winner===null?'—':`<span class="chip ${e.winner?'b':'g'}">${esc(n[e.winner]).slice(0,6)}</span>`}</td></tr>`).join('')}</tbody></table>`;
+}
+function renderResult(M,E,i){
+  const ov=$('resultOv'),sh=$('resultSheet'),n=S.cfg.names;
+  if(E.winner===null){ov.hidden=true;return;}
+  const w=E.winner,why=E.reason==='fifty'?'ちょうど50点に到達':`${esc(n[1-w])}が3回連続ミス`;
+  const score=`<div class="result"><span class="a">${M.wins[0]}</span><span class="d">–</span><span class="b">${M.wins[1]}</span></div><div class="rnames"><span>${esc(n[0])}</span><span>${esc(n[1])}</span></div>`;
+  let head,btns;
+  if(M.over){
+    head=`<h2>${M.champ===null?'引き分け':esc(n[M.champ])+'の勝利'}</h2><p class="sub">試合終了　最終セット：${esc(n[w])}（${why}）</p>`;
+    btns=`<button class="btn primary" type="button" data-act="rematch">同じ設定でもう一試合</button><button class="btn" type="button" data-act="settings">設定を変えて新しい試合</button><button class="btn" type="button" data-act="undo">直前の入力を取り消す</button>`;
+    sh.innerHTML=head+finalTable(M)+`<div class="btns">${btns}</div>`;
+    ov.hidden=false;return;
+  }else{
+    head=`<h2>${esc(n[w])}が第${i+1}セットを獲得</h2><p class="sub">${why}</p>`;
+    btns=`<button class="btn primary" type="button" data-act="next">第${i+2}セットへ（先攻：${esc(n[firstOf(i+1)])}）</button><button class="btn" type="button" data-act="undo">直前の入力を取り消す</button>`;
+  }
+  sh.innerHTML=head+score+`<div class="btns">${btns}</div>`;
+  ov.hidden=false;
+}
+
+/* ---------- actions ---------- */
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2000);}
+function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+
+function input(v){
+  const i=S.sets.length-1;if(evalSet(S.sets[i],i).winner!==null)return;
+  S.sets[i].throws.push(v);S.lastAt=Date.now();clockRun(true);buzz(v?8:[20,40,20]);
+  const E=evalSet(S.sets[i],i);
+  if(E.last.burst){toast(`バースト　${S.cfg.names[E.last.p]}は25点に戻ります`);buzz([40,60,40]);}
+  else if(E.winner===null&&v===0&&S.cfg.threeMiss&&E.m[E.last.p]===2)toast(`${S.cfg.names[E.last.p]}：次のミスでセット負け`);
+  render();
+}
+function undo(){
+  const f=S.cfg.format;let L=S.sets.length-1;
+  if(S.sets[L].throws.length===0&&L>0){S.sets.pop();L--;}
+  if(S.sets[L].throws.length){S.sets[L].throws.pop();S.lastAt=S.sets[L].throws.length?Date.now():null;}
+  render();
+}
+
+/* ---------- notices ---------- */
+const MARKS=[10,5,2,0];
+function checkNotices(left,total){
+  if(!S.clock.since&&left>0)return;
+  for(const m of MARKS){
+    if(m*60000>=total||S.clock.fired.includes(m)||left>m*60000)continue;
+    S.clock.fired.push(m);
+    if(!MARKS.some(x=>x<m&&x*60000<total&&left<=x*60000))showNotice(m); // 復帰時は最新の1件だけ
+    save();
+  }
+}
+let noticeT;
+function showNotice(m){
+  $('noticeV').textContent=m;
+  $('noticeT').textContent=m?`試合時間 残り${m}分`:'試合時間が終了しました';
+  $('notice').classList.add('show');
+  buzz(m?[120,80,120]:[300,120,300,120,500]);
+  clearTimeout(noticeT);noticeT=setTimeout(hideNotice,m?12000:30000);
+}
+function hideNotice(){$('notice').classList.remove('show');}
+$('noticeBtn').onclick=hideNotice;
+
+/* ---------- tick ---------- */
+function tick(){
+  const mc=$('mclock');
+  if(!hasClock()){mc.className='tile timer mclock idle';$('mval').textContent='—';$('mstate').textContent='制限なし';$('mlimit').textContent='';}
+  else{
+    const total=S.cfg.timeLimit*60000;let left=clockLeft();
+    if(left<=0&&S.clock.since){S.clock.left=0;S.clock.since=null;left=0;}
+    checkNotices(left,total);
+    const run=!!S.clock.since,ended=left<=0,show=S.cfg.showClock||peeking;
+    const lvl=ended?'':left<=120000?'crit':left<=300000?'warn':'';
+    mc.className='tile timer mclock'+(run?' run':'')+(ended?' ended':'')+(show&&lvl?' '+lvl:'')+(show?'':' hide');
+    $('mlimit').textContent=S.cfg.timeLimit+'分';
+    $('mval').textContent=ended?'終了':show?mmss(left):'● ● ●';
+    $('mstate').textContent=ended?'時間終了':peeking?'離すと隠れます':run?(show?'計測中':'長押しで確認'):(S.clock.left===total?'タップで開始':'一時停止中');
+  }
+  const el=$('throw'),i=S.sets.length-1,E=evalSet(S.sets[i],i);
+  if(!S.lastAt){el.className='tile timer idle';$('tval').textContent='0:00';$('tlbl').innerHTML='得点入力で<br>計測開始';return;}
+  if(E.winner!==null){el.className='tile timer idle';$('tlbl').innerHTML='停止中';return;}
+  const sec=Math.floor((Date.now()-S.lastAt)/1000);
+  $('tval').textContent=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  const over=sec>=60;el.className='tile timer'+(over?' over':'');
+  $('tlbl').innerHTML=`${esc(S.cfg.names[E.turn])}<br>${over?'1分超過':'の投擲'}`;
+}
+setInterval(tick,250);
+
+/* ---------- settings ---------- */
+let draft;
+function openSettings(){
+  draft=clone(S.cfg);if(draft.timeLimit==null)draft.timeLimit=DEF.timeLimit;
+  $('nameA').value=draft.names[0];$('nameB').value=draft.names[1];
+  $('threeMiss').checked=draft.threeMiss;$('showClock').checked=!!draft.showClock;syncSettings();$('settingsOv').hidden=false;
+}
+function syncSettings(){
+  const f=draft.format,t=draft.timeLimit;
+  $('nOut').textContent=f.n;$('fmtPreview').textContent=fmtLabel(f);
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===f.mode));
+  document.querySelectorAll('#firstSeg button').forEach((b,k)=>{b.setAttribute('aria-pressed',+b.dataset.v===draft.firstStarter);b.textContent=($(k?'nameB':'nameA').value.trim()||DEF.names[k]);});
+  document.querySelectorAll('#presets button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===f.mode&&+b.dataset.n===f.n));
+  document.querySelectorAll('#timePresets button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.t===t));
+  $('tOut').textContent=t||'—';
+  $('fmtNote').textContent=f.mode==='race'?`先に${f.n}セット取った方の勝ち（最大${f.n*2-1}セット）。`:
+    (f.n===1?'1セットで決着。':`${f.n}セットすべて行い、取ったセット数で勝敗を決めます。${f.n%2===0?'同数なら引き分けです。':''}`);
+  const ms=[10,5,2].filter(m=>m<t);
+  $('timeNote').textContent=t?`最初の得点入力で計測が始まり、時計をタップすると一時停止できます。${ms.map(m=>'残り'+m+'分').join('・')}${ms.length?'・':''}終了時に画面上部へ通知します。通知が出ても試合は止まりません。`:'時間制限なしで最後まで行います。';
+}
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;draft.format={mode:b.dataset.m,n:+b.dataset.n};syncSettings();});
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;draft.format.mode=b.dataset.v;syncSettings();});
+$('firstSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;draft.firstStarter=+b.dataset.v;syncSettings();});
+$('timePresets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;draft.timeLimit=+b.dataset.t;syncSettings();});
+$('nMinus').onclick=()=>{draft.format.n=Math.max(1,draft.format.n-1);syncSettings();};
+$('nPlus').onclick=()=>{draft.format.n=Math.min(10,draft.format.n+1);syncSettings();};
+$('tMinus').onclick=()=>{draft.timeLimit=Math.max(0,draft.timeLimit-1);syncSettings();};
+$('tPlus').onclick=()=>{draft.timeLimit=Math.min(120,draft.timeLimit+1);syncSettings();};
+['nameA','nameB'].forEach(id=>$(id).addEventListener('input',syncSettings));
+$('cancelSettings').onclick=()=>{$('settingsOv').hidden=true;};
+$('settingsForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  draft.names=[$('nameA').value.trim()||DEF.names[0],$('nameB').value.trim()||DEF.names[1]];
+  draft.threeMiss=$('threeMiss').checked;draft.showClock=$('showClock').checked;
+  S=newMatch(draft);$('settingsOv').hidden=true;render();
+});
+
+/* ---------- wiring ---------- */
+$('keys').addEventListener('click',e=>{const b=e.target.closest('.pin');if(b&&!b.disabled)input(+b.dataset.v);});
+$('miss').onclick=()=>input(0);
+$('undo').onclick=undo;
+$('lay').onclick=()=>{ui.layout=ui.layout==='form'?'grid':'form';buildKeys();save();};
+$('throw').onclick=()=>{if(S.lastAt){S.lastAt=Date.now();tick();save();}};
+// 長押し中だけ残り時間を表示（短いタップは一時停止・再開）
+let peeking=false,peekT=null,skipClick=false;
+const mcEl=$('mclock');
+mcEl.addEventListener('pointerdown',()=>{if(!hasClock())return;clearTimeout(peekT);peekT=setTimeout(()=>{peeking=true;skipClick=true;buzz(10);tick();},350);});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>mcEl.addEventListener(ev,()=>{clearTimeout(peekT);if(peeking){peeking=false;tick();}}));
+mcEl.addEventListener('contextmenu',e=>e.preventDefault());
+mcEl.onclick=()=>{if(skipClick){skipClick=false;return;}if(!hasClock()||clockLeft()<=0)return;clockRun(!S.clock.since);tick();save();};
+$('openSettings').onclick=openSettings;
+$('resultSheet').addEventListener('click',e=>{
+  const a=e.target.closest('button')?.dataset.act;if(!a)return;
+  if(a==='next'){S.sets.push({throws:[]});S.lastAt=null;}
+  else if(a==='rematch'){S=newMatch(S.cfg);}
+  else if(a==='settings'){$('resultOv').hidden=true;openSettings();return;}
+  else if(a==='undo'){undo();return;}
+  render();
+});
+window.addEventListener('resize',fitKeys);
+function openEnd(){
+  const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],n=S.cfg.names;
+  $('endSummary').textContent=`現在 第${i+1}セット、セットカウント ${n[0]} ${M.wins[0]} – ${M.wins[1]} ${n[1]}（このセット ${E.s[0]} – ${E.s[1]}）。`;
+  $('endOv').hidden=false;
+}
+$('openEnd').onclick=openEnd;
+$('endCancel').onclick=()=>{$('endOv').hidden=true;};
+$('endOv').addEventListener('click',e=>{if(e.target.id==='endOv')$('endOv').hidden=true;});
+$('endSame').onclick=()=>{S=newMatch(S.cfg);hideNotice();$('endOv').hidden=true;render();toast('試合をリセットしました');};
+$('endSettings').onclick=()=>{$('endOv').hidden=true;openSettings();};
+$('openHistory').onclick=()=>{$('historyOv').hidden=false;};
+$('closeHistory').onclick=()=>{$('historyOv').hidden=true;};
+$('historyOv').addEventListener('click',e=>{if(e.target.id==='historyOv')$('historyOv').hidden=true;});
+
+let wl=null;
+async function wake(){try{if('wakeLock' in navigator&&(!wl||wl.released))wl=await navigator.wakeLock.request('screen');}catch(e){}}
+document.addEventListener('pointerdown',wake,{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')wake();});
+
+/* ---------- 配信用スコア表示（?overlay=CODE） ---------- */
+function runOverlay(code){
+  document.documentElement.classList.add('ov');
+  document.title='モルック スコア表示';
+  document.querySelectorAll('body > *:not(script)').forEach(el=>el.remove());
+  const w=document.createElement('div');w.className='ovw';
+  w.innerHTML=`<span class="ovwait" id="oWait">スコア待機中　ROOM ${code}</span>
+  <div class="sb" id="oSb" hidden>
+    <div class="sbh"><span class="st" id="oSet">SET 1</span><span class="fm" id="oFmt"></span><span class="lv"><i></i>LIVE</span></div>
+    ${[0,1].map(p=>`<div class="sbr" data-p="${p}" id="oR${p}"><i class="clr"></i><span class="nm"><span class="tri"></span><span class="nmt"></span><span class="ms"></span></span><span class="sw"></span><span class="pt"></span></div>`).join('')}
+    <div class="sbf" id="oFlash"></div>
+  </div>`;
+  document.body.appendChild(w);
+  const g=id=>document.getElementById(id);
+  let cur=null,lastK=null,flashT=null;
+  const esc2=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function flash(txt,cls,ms){const f=g('oFlash');f.className='sbf show '+(cls||'');f.textContent=txt;clearTimeout(flashT);if(ms)flashT=setTimeout(()=>f.classList.remove('show'),ms);}
+  function draw(d){
+    g('oWait').hidden=true;g('oSb').hidden=false;
+    g('oSet').textContent=d.over?'FINAL':'SET '+d.set;
+    g('oFmt').textContent=d.fmt;
+    [0,1].forEach(p=>{
+      const r=g('oR'+p);
+      r.classList.toggle('on',d.turn===p);
+      r.querySelector('.nmt').textContent=d.names[p];
+      r.querySelector('.ms').innerHTML=(!d.over&&d.threeMiss&&d.m[p])?[0,1,2].map(k=>`<i class="${k<d.m[p]?'on':''}"></i>`).join(''):'';
+      r.querySelector('.sw').textContent=d.wins[p];
+      r.querySelector('.pt').innerHTML=d.over?`${d.wins[p]}<small>合計 ${d.totals[p]}点</small>`:String(d.s[p]);
+      r.querySelector('.sw').hidden=!!d.over;
+    });
+    if(d.over){flash(d.champ===null?'引き分け':esc2(d.names[d.champ])+' の勝利','win',0);g('oFlash').innerHTML=d.champ===null?'引き分け':esc2(d.names[d.champ])+'　WIN';lastK=d.last&&d.last.k;return;}
+    if(d.setWinner!==null&&d.setWinner!==undefined){flash(`${d.names[d.setWinner]} が SET ${d.set} 獲得`,'win',0);lastK=d.last&&d.last.k;return;}
+    const k=d.last&&d.last.k;
+    if(k&&k!==lastK&&lastK!==null){
+      const L=d.last,nm=d.names[L.p];
+      if(L.t===0)flash(`${nm}　ミス`,'miss',3000);
+      else if(L.burst)flash(`${nm}　+${L.t}　バースト → 25点`,'burst',4000);
+      else flash(`${nm}　+${L.t}`,'',2500);
+    }else if(lastK===null||!k)g('oFlash').classList.remove('show');
+    lastK=k||'';
+  }
+  const onMsg=(t,p)=>{try{const d=JSON.parse(p);if(!d||d.v!==1)return;if(cur&&d.at<cur.at)return;cur=d;draw(d);}catch(e){}};
+  if(!code){g('oWait').textContent='URLにルームコードがありません';return;}
+  MQ_BROKERS.forEach(u=>MQ(u,onMsg,()=>{}).sub(MQ_TOPIC(code)));
+}
+
+/* ---------- live cast ---------- */
+const ROOM_CH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const newRoom=()=>Array.from({length:6},()=>ROOM_CH[Math.floor(Math.random()*ROOM_CH.length)]).join('');
+let cast=null,castT=null;
+function castState(){
+  const M=matchInfo(),i=S.sets.length-1,E=M.ev[i],th=S.sets[i].throws;
+  return {v:1,at:Date.now(),names:S.cfg.names,fmt:fmtLabel(S.cfg.format),set:i+1,s:E.s,m:E.m,threeMiss:S.cfg.threeMiss,
+    turn:E.winner===null?E.turn:null,wins:M.wins,setWinner:E.winner,reason:E.reason,over:M.over,champ:M.champ,totals:M.totals,
+    last:E.last?{p:E.last.p,t:E.last.t,burst:E.last.burst,k:i+':'+th.length}:null};
+}
+function castStart(){
+  if(cast)return;
+  cast={ok:[false,false],since:Date.now()};
+  cast.clients=MQ_BROKERS.map((u,k)=>MQ(u,()=>{},on=>{if(!cast)return;cast.ok[k]=on;renderCast();}));
+  castSend(true);renderCast();
+  setTimeout(renderCast,9000);
+}
+function castStop(){if(!cast)return;cast.clients.forEach(c=>c.close());cast=null;renderCast();}
+function castSend(now){
+  if(!cast)return;clearTimeout(castT);
+  castT=setTimeout(()=>{if(!cast)return;const p=JSON.stringify(castState());cast.clients.forEach(c=>c.pub(MQ_TOPIC(ui.room),p,true));},now?0:120);
+}
+function overlayUrl(){return location.origin+location.pathname+'?overlay='+ui.room;}
+function renderCast(){
+  $('openCast').classList.toggle('live',!!cast);
+  if($('castOv').hidden)return;
+  $('castOn').checked=!!cast;
+  $('castCode').textContent=ui.room;
+  $('castUrl').textContent=overlayUrl();
+  const st=$('castStat');let cls='',txt='オフ';
+  if(cast){const ok=cast.ok.some(Boolean);
+    if(ok){cls='ok';txt='送信中　配信画面に反映されます';}
+    else if(Date.now()-cast.since>8000){cls='ng';txt='サーバーに接続できません。電波を確認してください';}
+    else {cls='wait';txt='接続しています…';}}
+  st.className='caststat '+cls;st.querySelector('span').textContent=txt;
+  const w=$('castWarn');let warn='';
+  if(location.protocol==='file:')warn='ファイルを直接開いた状態では、このURLは配信アプリで開けません。Netlifyに置いたアプリからこの画面を開いてください。';
+  else if(/claude/i.test(location.hostname))warn='このプレビュー画面からはスコアを送れません。Netlifyに置いたアプリから使ってください。';
+  w.hidden=!warn;w.textContent=warn;
+}
+$('openCast').onclick=()=>{$('castOv').hidden=false;renderCast();};
+$('castClose').onclick=()=>{$('castOv').hidden=true;};
+$('castOv').addEventListener('click',e=>{if(e.target.id==='castOv')$('castOv').hidden=true;});
+$('castOn').addEventListener('change',e=>{ui.cast=e.target.checked;ui.cast?castStart():castStop();save();renderCast();});
+$('castNew').onclick=()=>{ui.room=newRoom();save();if(cast){castStop();castStart();}renderCast();toast('コードを変更しました。配信アプリのURLも貼り直してください');};
+$('castCopy').onclick=()=>{
+  const u=overlayUrl();
+  const fallback=()=>{const r=document.createRange();r.selectNodeContents($('castUrl'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('URLを選択しました。長押しでコピーしてください');};
+  try{navigator.clipboard.writeText(u).then(()=>toast('URLをコピーしました'),fallback);}catch(e){fallback();}
+};
+setInterval(()=>{if(cast&&!$('castOv').hidden)renderCast();},2000);
+
+function start(data){
+  const d=(data&&data.S)?data:load();
+  if(d){S=d.S;if(S.cfg.showClock==null)S.cfg.showClock=false;ui=Object.assign(ui,d.ui||{});}else S=newMatch(DEF);
+  if(!ui.room)ui.room=newRoom();
+  if(ui.cast)castStart();
+  buildKeys();render();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitKeys);
+}
+window.claude?.hot?.snapshot?.(()=>({S,ui}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
+
+</body>
+</html>
