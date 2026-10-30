@@ -332,7 +332,8 @@ input[type=text],input[type=number]{width:100%;min-width:0;height:46px;border-ra
     <span class="code" id="castCode">------</span>
   </div>
   <div class="field">
-    <span class="lab">表示用URL（配信アプリに貼り付け）</span>
+    <span class="lab">配信用URL（配信アプリに貼り付け）</span>
+    <span class="note">アプリ本体のURLとは別物です。最後に「overlay」と「ov-ルームコード」が付いたこのURLを使ってください。</span>
     <div class="urlbox" id="castUrl"></div>
     <div class="btnrow"><button class="btn primary" type="button" id="castCopy">URLをコピー</button><button class="btn" type="button" id="castNew">コードを変更</button></div>
     <div class="warnbox" id="castWarn" hidden></div>
@@ -470,13 +471,14 @@ function MQ(url,onMsg,onState){
 }
 const MQ_BROKERS=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
 const MQ_TOPIC=code=>'molkky-scoreboard/v1/'+code;
-const APP_VER=5; // 更新のたびに上げる。配信用表示はこれより新しい版のデータを受け取ると自動で読み込み直す
+const APP_VER=6; // 更新のたびに上げる。配信用表示はこれより新しい版のデータを受け取ると自動で読み込み直す
 </script>
 <script>
 (function(){
 const KEY='molkky-v3';
 const QS=new URLSearchParams(location.search);
-if(QS.get('overlay')){runOverlay(QS.get('overlay').toUpperCase().replace(/[^A-Z0-9]/g,''));return;}
+const OV=QS.get('overlay')||(location.hash.match(/^#ov-([A-Za-z0-9]+)/)||[])[1];
+if(OV){runOverlay(OV.toUpperCase().replace(/[^A-Z0-9]/g,''));return;}
 const DEF_NAMES=['チームA','チームB','チームC'];
 const DEF={names:['チームA','チームB'],format:{mode:'race',n:3},threeMiss:true,firstStarter:0,timeLimit:20,showClock:false};
 const $=id=>document.getElementById(id);
@@ -877,7 +879,7 @@ function castSend(now){
   if(!cast)return;clearTimeout(castT);
   castT=setTimeout(()=>{if(!cast)return;const p=JSON.stringify(castState());cast.clients.forEach(c=>c.pub(MQ_TOPIC(ui.room),p,true));},now?0:120);
 }
-function overlayUrl(){return location.origin+location.pathname+'?overlay='+ui.room+'&v='+APP_VER;}
+function overlayUrl(){return location.origin+location.pathname+'?overlay='+ui.room+'&v='+APP_VER+'#ov-'+ui.room;}
 function renderCast(){
   $('openCast').classList.toggle('live',!!cast);
   if($('castOv').hidden)return;
